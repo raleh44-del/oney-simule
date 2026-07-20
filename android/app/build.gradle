@@ -1,0 +1,38 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.delrobi.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.delrobi.app'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Copie automatiquement l'app web (app-muscu.html) dans les assets avant chaque build.
+// Source unique : le fichier reste à la racine du dépôt.
+tasks.register('syncWebApp', Copy) {
+    from file("${rootProject.projectDir}/../app-muscu.html")
+    into file("${projectDir}/src/main/assets")
+    rename { 'index.html' }
+}
+tasks.named('preBuild') {
+    dependsOn 'syncWebApp'
+}
