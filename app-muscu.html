@@ -178,8 +178,8 @@ canvas{max-width:100%;display:block;}
 <section class="screen" id="s-programme">
   <div class="section-title">Format d'entraînement</div>
   <div class="pills" id="format-pills">
-    <div class="pill" data-fmt="fullbody">Full Body</div>
-    <div class="pill" data-fmt="ppl">Split PPL</div>
+    <div class="pill" data-fmt="fullbody">Corps complet</div>
+    <div class="pill" data-fmt="ppl">Poussée / Tirage / Jambes</div>
   </div>
   <p class="hint" id="fmt-hint"></p>
   <div id="prog-days"></div>
@@ -267,26 +267,26 @@ canvas{max-width:100%;display:block;}
 
 <script>
 /* =================== DONNÉES DE BASE =================== */
-const GROUPS = {push:{name:'Push',color:'#2f6bff'},pull:{name:'Pull',color:'#16a34a'},legs:{name:'Legs',color:'#f59e0b'},full:{name:'Full',color:'#8b5cf6'}};
+const GROUPS = {push:{name:'Poussée',color:'#2f6bff'},pull:{name:'Tirage',color:'#16a34a'},legs:{name:'Jambes',color:'#f59e0b'},full:{name:'Complet',color:'#8b5cf6'}};
 
 // Programmes : chaque jour = liste d'exos {nom, groupe, series, reps, key(lift de référence pour le test)}
 const PROGRAMMES = {
   fullbody:[
-    {jour:'Full Body A',exos:[
+    {jour:'Corps complet A',exos:[
       {nom:'Squat',groupe:'legs',series:4,reps:8,key:'squat'},
       {nom:'Développé couché',groupe:'push',series:4,reps:8,key:'bench'},
       {nom:'Rowing barre',groupe:'pull',series:4,reps:8,key:'row'},
       {nom:'Développé militaire',groupe:'push',series:3,reps:10,key:'ohp'},
       {nom:'Gainage',groupe:'full',series:3,reps:1},
     ]},
-    {jour:'Full Body B',exos:[
+    {jour:'Corps complet B',exos:[
       {nom:'Soulevé de terre',groupe:'legs',series:4,reps:6,key:'deadlift'},
       {nom:'Traction',groupe:'pull',series:4,reps:8},
       {nom:'Développé incliné',groupe:'push',series:4,reps:8,key:'bench'},
       {nom:'Fentes',groupe:'legs',series:3,reps:10,key:'squat'},
       {nom:'Curl biceps',groupe:'pull',series:3,reps:12},
     ]},
-    {jour:'Full Body C',exos:[
+    {jour:'Corps complet C',exos:[
       {nom:'Presse à cuisses',groupe:'legs',series:4,reps:10,key:'squat'},
       {nom:'Rowing haltère',groupe:'pull',series:4,reps:10,key:'row'},
       {nom:'Dips',groupe:'push',series:3,reps:10},
@@ -295,7 +295,7 @@ const PROGRAMMES = {
     ]},
   ],
   ppl:[
-    {jour:'Push',exos:[
+    {jour:'Poussée',exos:[
       {nom:'Développé couché',groupe:'push',series:4,reps:8,key:'bench'},
       {nom:'Développé incliné',groupe:'push',series:4,reps:10,key:'bench'},
       {nom:'Développé militaire',groupe:'push',series:4,reps:8,key:'ohp'},
@@ -303,7 +303,7 @@ const PROGRAMMES = {
       {nom:'Dips',groupe:'push',series:3,reps:10},
       {nom:'Extensions triceps',groupe:'push',series:3,reps:12},
     ]},
-    {jour:'Pull',exos:[
+    {jour:'Tirage',exos:[
       {nom:'Tractions',groupe:'pull',series:4,reps:8},
       {nom:'Rowing barre',groupe:'pull',series:4,reps:8,key:'row'},
       {nom:'Rowing haltère',groupe:'pull',series:3,reps:10,key:'row'},
@@ -311,7 +311,7 @@ const PROGRAMMES = {
       {nom:'Face pull',groupe:'pull',series:3,reps:15},
       {nom:'Curl biceps',groupe:'pull',series:3,reps:12},
     ]},
-    {jour:'Legs',exos:[
+    {jour:'Jambes',exos:[
       {nom:'Squat',groupe:'legs',series:4,reps:8,key:'squat'},
       {nom:'Presse à cuisses',groupe:'legs',series:4,reps:10,key:'squat'},
       {nom:'Soulevé de terre roumain',groupe:'legs',series:4,reps:8,key:'deadlift'},
@@ -422,8 +422,8 @@ $('#hero-start').onclick=()=>startSession(nextDayIndex());
 function renderProgramme(){
   $$('#format-pills .pill').forEach(p=>p.classList.toggle('on',p.dataset.fmt===S.format));
   $('#fmt-hint').textContent=S.format==='fullbody'
-    ? 'Full Body : 3 séances complètes (A / B / C) qui travaillent tout le corps à chaque fois.'
-    : 'Split PPL : 3 jours ciblés — Push (pecs/épaules/triceps), Pull (dos/biceps), Legs (jambes).';
+    ? 'Corps complet : 3 séances complètes (A / B / C) qui travaillent tout le corps à chaque fois.'
+    : 'Poussée / Tirage / Jambes : 3 jours ciblés — Poussée (pecs/épaules/triceps), Tirage (dos/biceps), Jambes (quadriceps/ischios/fessiers).';
   const box=$('#prog-days');
   box.innerHTML=PROGRAMMES[S.format].map((d,i)=>`
     <div class="card pad0">
@@ -440,7 +440,7 @@ function renderProgramme(){
       </div>`).join('')}
     </div>`).join('');
 }
-$('#format-pills').addEventListener('click',e=>{const p=e.target.closest('.pill');if(!p)return;S.format=p.dataset.fmt;save();renderProgramme();toast('Format : '+(S.format==='ppl'?'Split PPL':'Full Body'));});
+$('#format-pills').addEventListener('click',e=>{const p=e.target.closest('.pill');if(!p)return;S.format=p.dataset.fmt;save();renderProgramme();toast('Format : '+(S.format==='ppl'?'Poussée / Tirage / Jambes':'Corps complet'));});
 
 /* =================== SÉANCES (liste) =================== */
 function renderSeances(){
@@ -471,7 +471,7 @@ function startSession(dayIdx){
 function go2session(){$$('.screen').forEach(s=>s.classList.remove('active'));$('#s-session').classList.add('active');$$('#nav button').forEach(b=>b.classList.remove('on'));window.scrollTo(0,0);}
 function renderSession(){
   const a=S.active;if(!a)return;
-  $('#sess-day').textContent=a.format==='ppl'?'Split PPL':'Full Body';
+  $('#sess-day').textContent=a.format==='ppl'?'Poussée · Tirage · Jambes':'Corps complet';
   $('#sess-name').textContent=a.jour;
   $('#sess-exos').innerHTML=a.exos.map((ex,ei)=>`
     <div class="exo">
