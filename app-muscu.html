@@ -87,8 +87,25 @@ body{
 .rest-banner button{background:rgba(255,255,255,.22);border:none;color:#fff;font-weight:700;padding:9px 14px;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;}
 .exo{margin-bottom:16px;}
 .exo-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:0 2px;}
-.exo-head .name{font-weight:700;font-size:15.5px;flex:1;line-height:1.2;}
-.exo-head .target{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;}
+.exo-head .htext{flex:1;min-width:0;}
+.exo-head .name{font-weight:700;font-size:15.5px;line-height:1.2;}
+.exo-head .cue{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:3px;line-height:1.35;}
+.exo-head .target{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;align-self:flex-start;}
+/* barre de progression séance */
+.sprog{display:flex;align-items:center;gap:10px;margin:0 2px 16px;}
+.sprog-bar{flex:1;height:9px;border-radius:6px;background:var(--card2);overflow:hidden;border:1px solid var(--border);}
+.sprog-bar i{display:block;height:100%;background:var(--green);width:0;transition:width .3s ease;}
+#sprog-txt{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;}
+/* onboarding accueil */
+.onboard{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:6px 4px;box-shadow:var(--shadow);margin-bottom:14px;}
+.ob-title{font-size:14px;font-weight:800;padding:12px 14px 6px;}
+.ob-step{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;border-top:1px solid var(--border);}
+.ob-num{width:26px;height:26px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-weight:800;font-size:13px;display:grid;place-items:center;flex:none;}
+.ob-step.done .ob-num{background:var(--green);color:#fff;}
+.ob-step .grow .t{font-weight:700;font-size:14px;}
+.ob-step .grow .s{font-size:12px;color:var(--muted);margin-top:1px;}
+.ob-step.done .grow .t{color:var(--muted);text-decoration:line-through;}
+.ob-step .chev{color:var(--muted2);font-size:18px;font-weight:700;}
 table.sets{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
 table.sets th{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;padding:9px 4px;background:var(--card2);border-bottom:1px solid var(--border);}
 table.sets td{padding:7px 4px;text-align:center;border-bottom:1px solid var(--border);}
@@ -129,6 +146,7 @@ canvas{max-width:100%;display:block;}
 <!-- ACCUEIL -->
 <section class="screen active" id="s-accueil">
   <p class="hint" id="greet"></p>
+  <div class="onboard" id="onboard" style="display:none"></div>
   <div class="hero" id="hero">
     <div class="day" id="hero-prog">Programme</div>
     <h2 id="hero-name">—</h2>
@@ -172,6 +190,7 @@ canvas{max-width:100%;display:block;}
     <div style="font-size:20px;font-weight:800;" id="sess-name">Séance</div></div>
     <button class="icon-btn" id="sess-close">✕</button>
   </div>
+  <div class="sprog"><div class="sprog-bar"><i id="sprog-fill"></i></div><span id="sprog-txt">0 / 0</span></div>
   <div id="sess-exos"></div>
   <button class="btn btn-green" id="sess-finish" style="margin-top:6px;">Terminer la séance ✓</button>
 </section>
@@ -263,6 +282,27 @@ const GROUPS = {
   bras:{name:'Bras',color:'#ec4899'}, abdos:{name:'Abdos',color:'#0ea5e9'}, cardio:{name:'Cardio',color:'#ef4444'}
 };
 
+/* ============ CONSIGNES (comment faire) ============ */
+// Par défaut selon la machine (icône) ; un exo peut fournir sa propre .cue.
+const CUES = {
+  chestpress:'Assis, pousse les poignées devant toi, contrôle le retour.',
+  pecdeck:'Rapproche les bras devant la poitrine en serrant les pectoraux.',
+  latpull:'Tire la barre vers le haut de la poitrine, coudes vers le bas.',
+  row:'Tire la poignée vers le ventre en serrant les omoplates.',
+  shoulderpress:'Pousse les poignées au-dessus de la tête, sans bloquer les coudes.',
+  legpress:'Pousse la plateforme avec les talons, ne bloque pas les genoux.',
+  legext:'Tends les jambes vers l\'avant, contrôle la descente.',
+  glutes:'Écarte les cuisses contre la résistance, reviens lentement.',
+  biceps:'Plie les bras pour monter la charge, garde les coudes fixes.',
+  triceps:'Tends les bras vers le bas, coudes collés au corps.',
+  abs:'Enroule le buste vers l\'avant en soufflant, contrôle le retour.',
+  treadmill:'Marche ou cours à allure régulière, buste droit.',
+  bike:'Pédale à résistance modérée, dos droit.',
+  rower:'Pousse avec les jambes puis tire les bras vers le ventre.',
+  elliptical:'Mouvement fluide, pousse et tire avec les bras et les jambes.'
+};
+function cueFor(exo){return exo.cue || CUES[exo.icon] || '';}
+
 /* ============ PROGRAMMES (machines Basic-Fit) ============ */
 // exo muscu  : {nom, icon, groupe, type:'muscu', series, reps, key?}
 // exo cardio : {nom, icon, groupe:'cardio', type:'cardio', duree(min)}
@@ -282,9 +322,9 @@ const PROGRAMMES = {
       {jour:'Bas du corps',exos:[
         {nom:'Presse à cuisses (leg press)',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:10,key:'legpress'},
         {nom:'Leg extension',icon:'legext',groupe:'jambes',type:'muscu',series:4,reps:12},
-        {nom:'Leg curl',icon:'legext',groupe:'jambes',type:'muscu',series:4,reps:12,key:'legcurl'},
+        {nom:'Leg curl',icon:'legext',groupe:'jambes',type:'muscu',series:4,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
         {nom:'Abducteurs / Fessiers',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:15},
-        {nom:'Mollets à la presse',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:15},
+        {nom:'Mollets à la presse',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:15,cue:'Pousse sur la pointe des pieds, monte haut sur les mollets.'},
         {nom:'Machine abdos (crunch)',icon:'abs',groupe:'abdos',type:'muscu',series:3,reps:15},
       ]},
       {jour:'Full machines',exos:[
@@ -311,7 +351,7 @@ const PROGRAMMES = {
         {nom:'Rameur',icon:'rower',groupe:'cardio',type:'cardio',duree:8},
         {nom:'Développé épaules machine',icon:'shoulderpress',groupe:'epaules',type:'muscu',series:3,reps:15,key:'shoulder'},
         {nom:'Rowing assis',icon:'row',groupe:'dos',type:'muscu',series:3,reps:15,key:'row'},
-        {nom:'Leg curl',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:15,key:'legcurl'},
+        {nom:'Leg curl',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:15,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
         {nom:'Elliptique',icon:'elliptical',groupe:'cardio',type:'cardio',duree:12},
         {nom:'Machine abdos',icon:'abs',groupe:'abdos',type:'muscu',series:3,reps:20},
       ]},
@@ -405,9 +445,10 @@ function renderAccueil(){
   const p=prog(),day=p.days[nextDayIndex()];
   $('#hero').style.background=`linear-gradient(135deg,${p.color},${p.color}bb)`;
   $('#hero').style.boxShadow=`0 8px 24px ${p.color}55`;
-  $('#hero-prog').textContent=p.emoji+' '+p.label;
+  $('#hero-prog').textContent='Séance du jour';
   $('#hero-name').textContent=day.jour;
-  $('#hero-meta').textContent=sessionMeta(day);
+  $('#hero-meta').textContent=p.emoji+' '+p.label+' · '+sessionMeta(day);
+  renderOnboard();
   $('#st-week').textContent=weekCount();
   $('#st-streak').textContent=streak();
   $('#st-cardio').textContent=S.history.reduce((a,b)=>a+(b.cardioMin||0),0);
@@ -417,6 +458,19 @@ function renderAccueil(){
     <div class="row"><span class="dot" style="background:${GROUPS[mainGroup(hh)].color}"></span>
       <div class="grow"><div class="t">${hh.jour}</div><div class="s">${fmtDate(hh.date)} · ${hh.volume?((hh.volume/1000).toFixed(1)+' t'):''}${hh.volume&&hh.cardioMin?' · ':''}${hh.cardioMin?hh.cardioMin+' min cardio':''}</div></div>
       <span class="badge done">✓ Fait</span></div>`).join('');}
+}
+function renderOnboard(){
+  const box=$('#onboard');
+  if(S.history.length>0){box.style.display='none';return;}
+  box.style.display='';
+  const testDone=Object.keys(S.tests).length>0;
+  box.innerHTML=`<div class="ob-title">🚀 Bien démarrer en 3 étapes</div>
+    <div class="ob-step" onclick="go('programme')"><span class="ob-num">1</span>
+      <div class="grow"><div class="t">Choisis ton objectif</div><div class="s">Perte de poids, prise de masse ou cardio</div></div><span class="chev">›</span></div>
+    <div class="ob-step ${testDone?'done':''}" onclick="go('profil')"><span class="ob-num">${testDone?'✓':'2'}</span>
+      <div class="grow"><div class="t">Fais ton test de force</div><div class="s">Pour des poids adaptés à ton niveau</div></div><span class="chev">›</span></div>
+    <div class="ob-step" onclick="startSession(nextDayIndex())"><span class="ob-num">3</span>
+      <div class="grow"><div class="t">Lance ta première séance</div><div class="s">Suis les machines une par une, valide chaque série</div></div><span class="chev">›</span></div>`;
 }
 $('#hero-start').onclick=()=>startSession(nextDayIndex());
 
@@ -437,8 +491,8 @@ function renderProgramme(){
       </div>
       ${d.exos.map(e=>`<div class="row" style="padding:10px 14px;">
         ${icoTile(e)}
-        <div class="grow"><div class="t" style="font-size:14px;">${e.nom}</div></div>
-        <div class="s" style="text-align:right;">
+        <div class="grow"><div class="t" style="font-size:14px;">${e.nom}</div><div class="s">${cueFor(e)}</div></div>
+        <div class="s" style="text-align:right;flex:none;">
           ${e.type==='cardio'?`<div style="color:${GROUPS.cardio.color};font-weight:700;">${e.duree} min</div>`
             :`<div>${e.series} × ${e.reps} reps</div><div style="color:var(--blue);font-weight:700;">${predictedWeight(e)?predictedWeight(e)+' kg':'—'}</div>`}
         </div></div>`).join('')}
@@ -463,9 +517,9 @@ let restTimer=null;
 function startSession(dayIdx){
   const day=prog().days[dayIdx];
   S.active={dayIdx,jour:day.jour,program:S.program,exos:day.exos.map(e=>{
-    if(e.type==='cardio'){const d=predictedDuree(e);return{nom:e.nom,icon:e.icon,groupe:'cardio',type:'cardio',reps:e.duree,series:[{prevuDuree:d,reelDuree:d,done:false}]};}
+    if(e.type==='cardio'){const d=predictedDuree(e);return{nom:e.nom,icon:e.icon,cue:cueFor(e),groupe:'cardio',type:'cardio',reps:e.duree,series:[{prevuDuree:d,reelDuree:d,done:false}]};}
     const p=predictedWeight(e);
-    return{nom:e.nom,icon:e.icon,groupe:e.groupe,type:'muscu',reps:e.reps,series:Array.from({length:e.series},()=>({prevu:p,reel:p||'',repsFait:e.reps,done:false}))};
+    return{nom:e.nom,icon:e.icon,cue:cueFor(e),groupe:e.groupe,type:'muscu',reps:e.reps,series:Array.from({length:e.series},()=>({prevu:p,reel:p||'',repsFait:e.reps,done:false}))};
   })};
   save();renderSession();
   $$('.screen').forEach(s=>s.classList.remove('active'));$('#s-session').classList.add('active');$$('#nav button').forEach(b=>b.classList.remove('on'));window.scrollTo(0,0);
@@ -474,8 +528,12 @@ function renderSession(){
   const a=S.active;if(!a)return;
   $('#sess-prog').textContent=PROGRAMMES[a.program].emoji+' '+PROGRAMMES[a.program].label;
   $('#sess-name').textContent=a.jour;
-  $('#sess-exos').innerHTML=a.exos.map((ex,ei)=>{
-    const head=`<div class="exo-head">${icoTile(ex)}<span class="name">${ex.nom}</span><span class="target">${ex.type==='cardio'?ex.reps+' min':ex.series.length+' × '+ex.reps}</span></div>`;
+  const hasMuscu=a.exos.some(e=>e.type==='muscu');
+  const hint=hasMuscu
+    ? '<p class="hint">💡 « Poids prévu » = suggestion d\'après ton test de force et tes séances passées. Ajuste « Poids réel », entre tes reps, puis valide ✓.</p>'
+    : '<p class="hint">💡 Note la durée réelle en minutes pour chaque machine, puis valide ✓.</p>';
+  $('#sess-exos').innerHTML=hint+a.exos.map((ex,ei)=>{
+    const head=`<div class="exo-head">${icoTile(ex)}<div class="htext"><span class="name">${ex.nom}</span>${cueFor(ex)?`<span class="cue">${cueFor(ex)}</span>`:''}</div><span class="target">${ex.type==='cardio'?ex.reps+' min':ex.series.length+' × '+ex.reps}</span></div>`;
     if(ex.type==='cardio'){
       return `<div class="exo">${head}
         <table class="sets"><thead><tr><th>Bloc</th><th>Durée prévue</th><th>Durée réelle (min)</th><th>✓</th></tr></thead><tbody>
@@ -496,6 +554,14 @@ function renderSession(){
         <td><button class="vbtn" onclick="toggleSet(${ei},${si})">✓</button></td></tr>`).join('')}
       </tbody></table></div>`;
   }).join('');
+  updateProgress();
+}
+function updateProgress(){
+  const a=S.active;if(!a)return;let tot=0,done=0;
+  a.exos.forEach(ex=>ex.series.forEach(s=>{tot++;if(s.done)done++;}));
+  const f=$('#sprog-fill'),t=$('#sprog-txt');if(!f||!t)return;
+  f.style.width=(tot?done/tot*100:0)+'%';
+  t.textContent=`${done} / ${tot} validé${done>1?'s':''}`;
 }
 function setCell(ei,si,f,v){S.active.exos[ei].series[si][f]=v===''?'':(parseFloat(v)||0);save();}
 function toggleSet(ei,si){
