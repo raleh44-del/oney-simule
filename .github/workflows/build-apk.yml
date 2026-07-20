@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -44,3 +44,15 @@ jobs:
           name: Delrobi-apk
           path: Delrobi-debug.apk
           if-no-files-found: error
+
+      - name: Publish APK to a Release (lien de téléchargement direct)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: Delrobi — dernier APK
+          body: |
+            APK debug de Delrobi, régénéré automatiquement à chaque build.
+            Télécharge **Delrobi-debug.apk** ci-dessous et installe-le sur Android
+            (autorise « Sources inconnues »).
+          files: Delrobi-debug.apk
+          prerelease: true
