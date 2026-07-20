@@ -221,7 +221,7 @@ canvas{max-width:100%;display:block;}
     <div class="two">
       <div class="field"><label>Poids de corps (kg)</label><input id="p-weight" type="number" inputmode="decimal" placeholder="75"></div>
       <div class="field"><label>Objectif</label>
-        <select id="p-goal"><option value="masse">Prise de masse</option><option value="perte">Perte de poids</option><option value="cardio">Cardio</option></select>
+        <select id="p-goal"><option value="masse">Prise de masse</option><option value="perte">Perte de poids</option><option value="cardio">Cardio</option><option value="femmes">Spécial femmes</option><option value="hommes">Spécial hommes</option></select>
       </div>
     </div>
     <div class="field"><label>Repos par défaut (sec.)</label><input id="p-rest" type="number" inputmode="numeric" placeholder="90"></div>
@@ -272,7 +272,9 @@ const ICONS = {
   treadmill:'<svg viewBox="0 0 24 24"><path d="M3 18l13 -2"/><path d="M16 16v-6"/><path d="M16 10h3"/><circle cx="10" cy="6" r="1.5"/><path d="M10 8v3l2 2"/></svg>',
   bike:'<svg viewBox="0 0 24 24"><circle cx="7" cy="16" r="3"/><path d="M7 16l3 -6h4"/><path d="M14 10v-4h2"/><path d="M10 16h6"/></svg>',
   rower:'<svg viewBox="0 0 24 24"><path d="M4 16h16"/><path d="M6 16l6 -4"/><path d="M12 12l6 -3"/><circle cx="6" cy="16" r="1"/></svg>',
-  elliptical:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="7" ry="3"/><path d="M6 16v-8"/><path d="M18 16V6"/></svg>'
+  elliptical:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="7" ry="3"/><path d="M6 16v-8"/><path d="M18 16V6"/></svg>',
+  hipthrust:'<svg viewBox="0 0 24 24"><path d="M3 19h18"/><path d="M6 19v-3c0-1 1-2 2-2h8c1 0 2 1 2 2v3"/><path d="M5 12h14"/><circle cx="12" cy="8" r="1.6"/></svg>',
+  stair:'<svg viewBox="0 0 24 24"><path d="M3 20h4v-4h4v-4h4v-4h6"/></svg>'
 };
 
 /* ============ GROUPES ============ */
@@ -299,7 +301,9 @@ const CUES = {
   treadmill:'Marche ou cours à allure régulière, buste droit.',
   bike:'Pédale à résistance modérée, dos droit.',
   rower:'Pousse avec les jambes puis tire les bras vers le ventre.',
-  elliptical:'Mouvement fluide, pousse et tire avec les bras et les jambes.'
+  elliptical:'Mouvement fluide, pousse et tire avec les bras et les jambes.',
+  hipthrust:'Pousse les hanches vers le haut en serrant fort les fessiers.',
+  stair:'Monte les marches à rythme régulier — top pour les fessiers.'
 };
 function cueFor(exo){return exo.cue || CUES[exo.icon] || '';}
 
@@ -372,6 +376,57 @@ const PROGRAMMES = {
       {jour:'Elliptique & vélo',exos:[
         {nom:'Elliptique',icon:'elliptical',groupe:'cardio',type:'cardio',duree:20},
         {nom:'Vélo',icon:'bike',groupe:'cardio',type:'cardio',duree:20},
+      ]},
+    ]},
+  femmes:{ label:'Spécial femmes', emoji:'🍑', color:'#ec4899',
+    desc:'Fessiers & silhouette : hanches, cuisses, taille et gainage.',
+    days:[
+      {jour:'Fessiers & cuisses',exos:[
+        {nom:'Hip thrust machine',icon:'hipthrust',groupe:'jambes',type:'muscu',series:4,reps:12},
+        {nom:'Presse à cuisses (pieds hauts)',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:12,key:'legpress',cue:'Pieds hauts sur la plateforme pour cibler les fessiers.'},
+        {nom:'Abducteurs (ouverture)',icon:'glutes',groupe:'jambes',type:'muscu',series:4,reps:15},
+        {nom:'Adducteurs (intérieur cuisse)',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Resserre les cuisses contre la résistance, contrôle le retour.'},
+        {nom:'Leg curl (ischios)',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
+        {nom:'Fessiers à la poulie (kickback)',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Pousse la jambe vers l\'arrière, serre le fessier en haut.'},
+      ]},
+      {jour:'Jambes & abdos',exos:[
+        {nom:'Presse à cuisses',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:12,key:'legpress'},
+        {nom:'Leg extension (quadriceps)',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:15},
+        {nom:'Abducteurs',icon:'glutes',groupe:'jambes',type:'muscu',series:4,reps:15},
+        {nom:'Mollets à la presse',icon:'legpress',groupe:'jambes',type:'muscu',series:3,reps:20,cue:'Pousse sur la pointe des pieds, monte haut sur les mollets.'},
+        {nom:'Machine abdos (gainage)',icon:'abs',groupe:'abdos',type:'muscu',series:3,reps:20},
+        {nom:'Vélo (récup active)',icon:'bike',groupe:'cardio',type:'cardio',duree:10},
+      ]},
+      {jour:'Fessiers & cardio',exos:[
+        {nom:'Escalier (stairmaster)',icon:'stair',groupe:'cardio',type:'cardio',duree:15},
+        {nom:'Hip thrust machine',icon:'hipthrust',groupe:'jambes',type:'muscu',series:3,reps:15},
+        {nom:'Abducteurs',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:20},
+        {nom:'Fessiers à la poulie (kickback)',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Pousse la jambe vers l\'arrière, serre le fessier en haut.'},
+        {nom:'Vélo',icon:'bike',groupe:'cardio',type:'cardio',duree:10},
+      ]},
+    ]},
+  hommes:{ label:'Spécial hommes', emoji:'🧔', color:'#6366f1',
+    desc:'Volume haut du corps : pecs, dos, épaules et bras sur machines.',
+    days:[
+      {jour:'Pecs & bras',exos:[
+        {nom:'Chest press',icon:'chestpress',groupe:'pecs',type:'muscu',series:4,reps:8,key:'chest'},
+        {nom:'Développé incliné machine',icon:'chestpress',groupe:'pecs',type:'muscu',series:4,reps:10,key:'chest',cue:'Pousse les poignées vers le haut, cible le haut des pectoraux.'},
+        {nom:'Pec deck (butterfly)',icon:'pecdeck',groupe:'pecs',type:'muscu',series:3,reps:12},
+        {nom:'Curl biceps machine',icon:'biceps',groupe:'bras',type:'muscu',series:4,reps:12},
+        {nom:'Extension triceps (poulie)',icon:'triceps',groupe:'bras',type:'muscu',series:4,reps:12},
+      ]},
+      {jour:'Dos & épaules',exos:[
+        {nom:'Tirage vertical (lat pulldown)',icon:'latpull',groupe:'dos',type:'muscu',series:4,reps:8,key:'lat'},
+        {nom:'Rowing assis (seated row)',icon:'row',groupe:'dos',type:'muscu',series:4,reps:10,key:'row'},
+        {nom:'Développé épaules machine',icon:'shoulderpress',groupe:'epaules',type:'muscu',series:4,reps:10,key:'shoulder'},
+        {nom:'Élévations latérales machine',icon:'shoulderpress',groupe:'epaules',type:'muscu',series:3,reps:15,cue:'Monte les bras sur les côtés jusqu\'aux épaules, contrôle.'},
+        {nom:'Curl biceps machine',icon:'biceps',groupe:'bras',type:'muscu',series:3,reps:12},
+      ]},
+      {jour:'Jambes & full',exos:[
+        {nom:'Presse à cuisses (leg press)',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:10,key:'legpress'},
+        {nom:'Leg curl',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
+        {nom:'Chest press',icon:'chestpress',groupe:'pecs',type:'muscu',series:3,reps:10,key:'chest'},
+        {nom:'Machine abdos',icon:'abs',groupe:'abdos',type:'muscu',series:3,reps:20},
       ]},
     ]},
 };
