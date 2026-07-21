@@ -106,6 +106,31 @@ body{
 .ob-step .grow .s{font-size:12px;color:var(--muted);margin-top:1px;}
 .ob-step.done .grow .t{color:var(--muted);text-decoration:line-through;}
 .ob-step .chev{color:var(--muted2);font-size:18px;font-weight:700;}
+/* planning semaine (accueil) */
+.weekstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:14px;}
+.wd{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px 2px 9px;text-align:center;box-shadow:var(--shadow);}
+.wd .wl{font-size:10px;font-weight:700;color:var(--muted);}
+.wd .wi{margin:6px auto 0;width:9px;height:9px;border-radius:50%;background:var(--border2);}
+.wd.today{border-color:var(--blue);border-width:2px;padding:7px 1px 8px;}
+/* choix des jours */
+.daychips{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:4px;}
+.dc{padding:13px 2px;border-radius:12px;border:2px solid var(--border);background:var(--card);text-align:center;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:var(--shadow);}
+.dc.on{border-color:var(--blue);background:var(--blue);color:#fff;}
+/* planning list */
+.wp-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);}
+.wp-row:last-child{border-bottom:none;}
+.wp-row.today{background:var(--blue-soft);}
+.wp-day{width:40px;font-weight:800;font-size:13px;}
+.wp-sess{font-weight:700;font-size:14px;}
+.wp-row.rest .wp-sess{color:var(--muted);font-weight:600;}
+/* compléments */
+.supp-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border);}
+.supp-row:last-child{border-bottom:none;}
+.supp-time{font-weight:800;font-variant-numeric:tabular-nums;width:52px;font-size:15px;color:var(--blue);}
+.supp-emoji{font-size:20px;width:24px;text-align:center;}
+.toggles{display:flex;gap:8px;margin-bottom:4px;}
+.tg{flex:1;padding:13px;border-radius:12px;border:2px solid var(--border);background:var(--card2);font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);}
+.tg.on{border-color:var(--green);background:var(--green-soft);color:var(--green);}
 table.sets{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
 table.sets th{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;padding:9px 4px;background:var(--card2);border-bottom:1px solid var(--border);}
 table.sets td{padding:7px 4px;text-align:center;border-bottom:1px solid var(--border);}
@@ -147,6 +172,7 @@ canvas{max-width:100%;display:block;}
 <section class="screen active" id="s-accueil">
   <p class="hint" id="greet"></p>
   <div class="onboard" id="onboard" style="display:none"></div>
+  <div class="weekstrip" id="weekstrip"></div>
   <div class="hero" id="hero">
     <div class="day" id="hero-prog">Programme</div>
     <h2 id="hero-name">—</h2>
@@ -158,6 +184,7 @@ canvas{max-width:100%;display:block;}
     <div class="stat"><div class="n" id="st-streak">0</div><div class="l">jours de suite</div></div>
     <div class="stat"><div class="n" id="st-cardio">0</div><div class="l">min cardio</div></div>
   </div>
+  <div id="home-supp" style="display:none"></div>
   <div class="section-title">Reprendre</div>
   <div class="card pad0" id="home-recent"></div>
 </section>
@@ -166,6 +193,24 @@ canvas{max-width:100%;display:block;}
 <section class="screen" id="s-programme">
   <div class="section-title">Choisis ton objectif</div>
   <div class="prog-choice" id="prog-choice"></div>
+
+  <div class="section-title">Mes jours à la salle</div>
+  <div class="daychips" id="plan-days"></div>
+  <p class="hint">Touche les jours où tu vas t'entraîner. Delrobi répartit tes séances et met les autres jours en repos.</p>
+
+  <div class="section-title">Ta semaine</div>
+  <div class="card pad0" id="week-plan"></div>
+
+  <div class="section-title">Horaire & compléments</div>
+  <div class="card">
+    <div class="field"><label>Heure d'entraînement</label><input id="train-time" type="time"></div>
+    <div class="toggles">
+      <div class="tg" id="tg-whey">🥤 Whey</div>
+      <div class="tg" id="tg-creatine">💊 Créatine</div>
+    </div>
+    <div id="supp-preview"></div>
+  </div>
+
   <div class="section-title">Séances du programme</div>
   <div id="prog-days"></div>
 </section>
@@ -444,12 +489,15 @@ const LIFTS = [
 const DEFAULT = {
   user:{name:'',weight:null,rest:90,theme:'light'},
   program:'masse',
+  plan:{days:[0,2,4]},        // jours d'entraînement (0=Lun ... 6=Dim)
+  trainTime:'18:00',           // heure d'entraînement (pour les compléments)
+  supps:{whey:false,creatine:false},
   tests:{},
   history:[],
   active:null
 };
 let S = load();
-function load(){try{const r=JSON.parse(localStorage.getItem('delrobi'));return r?{...DEFAULT,...r,user:{...DEFAULT.user,...(r.user||{})}}:structuredClone(DEFAULT);}catch(e){return structuredClone(DEFAULT);}}
+function load(){try{const r=JSON.parse(localStorage.getItem('delrobi'));return r?{...DEFAULT,...r,user:{...DEFAULT.user,...(r.user||{})},plan:{...DEFAULT.plan,...(r.plan||{})},supps:{...DEFAULT.supps,...(r.supps||{})}}:structuredClone(DEFAULT);}catch(e){return structuredClone(DEFAULT);}}
 function save(){localStorage.setItem('delrobi',JSON.stringify(S));}
 
 /* ============ HELPERS ============ */
@@ -462,6 +510,21 @@ function todayStr(){return new Date().toISOString().slice(0,10);}
 function fmtDate(d){return new Date(d).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});}
 function icoTile(exo,size){const col=GROUPS[exo.groupe].color;return `<span class="exo-ico" style="background:${col}1f;color:${col}${size?`;width:${size}px;height:${size}px`:''}">${ICONS[exo.icon]||''}</span>`;}
 function prog(){return PROGRAMMES[S.program];}
+
+/* ---- planning semaine + compléments ---- */
+const WEEKDAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const WEEKDAYS_FULL=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+function todayIdx(){return (new Date().getDay()+6)%7;}
+function weekPlan(){const days=[...(S.plan?.days||[])].sort((a,b)=>a-b);const P=prog();const out=[];let t=0;
+  for(let i=0;i<7;i++){if(days.includes(i)){out.push({rest:false,si:P.days.length?t%P.days.length:0});t++;}else out.push({rest:true});}return out;}
+function nextTraining(){const wp=weekPlan();for(let k=1;k<=7;k++){const i=(todayIdx()+k)%7;if(!wp[i].rest)return{idx:i,si:wp[i].si};}return null;}
+function addMin(hhmm,m){const [h,mn]=(hhmm||'18:00').split(':').map(Number);const d=new Date(2000,0,1,h,mn+m);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function suppTimelineHTML(){const t=S.trainTime||'18:00',before=addMin(t,-30),after=addMin(t,75);const rows=[];
+  if(S.supps.whey)rows.push([before,'🥤','Shaker de whey — avant l\'entraînement']);
+  rows.push([t,'🏋️','Entraînement']);
+  if(S.supps.whey)rows.push([after,'🥤','Shaker de whey — après l\'entraînement']);
+  if(S.supps.creatine)rows.push([after,'💊','Créatine (3–5 g) — après']);
+  return '<div class="card" style="margin-bottom:0;">'+rows.map(r=>`<div class="supp-row"><span class="supp-time">${r[0]}</span><span class="supp-emoji">${r[1]}</span><span class="grow" style="font-size:13.5px;font-weight:600;">${r[2]}</span></div>`).join('')+'</div>';}
 
 function predictedWeight(exo){
   for(let i=S.history.length-1;i>=0;i--){const e=S.history[i].exos.find(x=>x.nom===exo.nom);
@@ -497,13 +560,30 @@ function mainGroup(h){const c={};(h.exos||[]).forEach(e=>c[e.groupe]=(c[e.groupe
 function renderAccueil(){
   const h=new Date().getHours();
   $('#greet').textContent=(h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir')+(S.user.name?' '+S.user.name:'')+' 👋';
-  const p=prog(),day=p.days[nextDayIndex()];
-  $('#hero').style.background=`linear-gradient(135deg,${p.color},${p.color}bb)`;
-  $('#hero').style.boxShadow=`0 8px 24px ${p.color}55`;
-  $('#hero-prog').textContent='Séance du jour';
-  $('#hero-name').textContent=day.jour;
-  $('#hero-meta').textContent=p.emoji+' '+p.label+' · '+sessionMeta(day);
+  const p=prog();
+  renderWeekStrip();
+  const te=weekPlan()[todayIdx()];
+  if(te.rest){
+    $('#hero').style.background='linear-gradient(135deg,#64748b,#94a3b8)';
+    $('#hero').style.boxShadow='0 8px 24px rgba(100,116,139,.35)';
+    $('#hero-prog').textContent="Aujourd'hui";
+    $('#hero-name').textContent='Repos 😴';
+    const nx=nextTraining();
+    $('#hero-meta').textContent=nx?`Prochaine séance : ${WEEKDAYS_FULL[nx.idx]} · ${p.days[nx.si].jour}`:'Choisis tes jours dans l\'onglet Programme';
+    $('#hero-start').textContent='Voir mon planning';
+    heroAction=()=>go('programme');
+  }else{
+    const day=p.days[te.si];
+    $('#hero').style.background=`linear-gradient(135deg,${p.color},${p.color}bb)`;
+    $('#hero').style.boxShadow=`0 8px 24px ${p.color}55`;
+    $('#hero-prog').textContent='Séance du jour';
+    $('#hero-name').textContent=day.jour;
+    $('#hero-meta').textContent=p.emoji+' '+p.label+' · '+sessionMeta(day);
+    $('#hero-start').textContent='Démarrer la séance ▶';
+    heroAction=()=>startSession(te.si);
+  }
   renderOnboard();
+  renderHomeSupp();
   $('#st-week').textContent=weekCount();
   $('#st-streak').textContent=streak();
   $('#st-cardio').textContent=S.history.reduce((a,b)=>a+(b.cardioMin||0),0);
@@ -527,7 +607,18 @@ function renderOnboard(){
     <div class="ob-step" onclick="startSession(nextDayIndex())"><span class="ob-num">3</span>
       <div class="grow"><div class="t">Lance ta première séance</div><div class="s">Suis les machines une par une, valide chaque série</div></div><span class="chev">›</span></div>`;
 }
-$('#hero-start').onclick=()=>startSession(nextDayIndex());
+function renderWeekStrip(){
+  const wp=weekPlan(),ti=todayIdx(),col=prog().color;
+  $('#weekstrip').innerHTML=WEEKDAYS.map((d,i)=>`<div class="wd ${i===ti?'today':''}"><div class="wl">${d}</div><div class="wi" style="${wp[i].rest?'':`background:${col}`}"></div></div>`).join('');
+}
+function renderHomeSupp(){
+  const box=$('#home-supp'),te=weekPlan()[todayIdx()];
+  if((!S.supps.whey&&!S.supps.creatine)||te.rest){box.style.display='none';return;}
+  box.style.display='';
+  box.innerHTML='<div class="section-title">Tes compléments aujourd\'hui</div>'+suppTimelineHTML();
+}
+let heroAction=()=>startSession(nextDayIndex());
+$('#hero-start').onclick=()=>heroAction&&heroAction();
 
 /* ============ PROGRAMME ============ */
 function renderProgramme(){
@@ -552,8 +643,27 @@ function renderProgramme(){
             :`<div>${e.series} × ${e.reps} reps</div><div style="color:var(--blue);font-weight:700;">${predictedWeight(e)?predictedWeight(e)+' kg':'—'}</div>`}
         </div></div>`).join('')}
     </div>`).join('');
+  renderPlanner();
+}
+function renderPlanner(){
+  const days=S.plan.days||[];
+  $('#plan-days').innerHTML=WEEKDAYS.map((d,i)=>`<div class="dc ${days.includes(i)?'on':''}" data-day="${i}">${d}</div>`).join('');
+  const wp=weekPlan(),ti=todayIdx();
+  $('#week-plan').innerHTML=WEEKDAYS.map((d,i)=>{const e=wp[i];
+    return `<div class="wp-row ${e.rest?'rest':''} ${i===ti?'today':''}"><span class="wp-day">${d}</span>${e.rest?'<span class="wp-sess">Repos 😴</span>':`<span class="dot" style="background:${GROUPS[mainGroup(prog().days[e.si])].color}"></span><span class="wp-sess">${prog().days[e.si].jour}</span>`}</div>`;
+  }).join('');
+  $('#train-time').value=S.trainTime||'18:00';
+  $('#tg-whey').classList.toggle('on',!!S.supps.whey);
+  $('#tg-creatine').classList.toggle('on',!!S.supps.creatine);
+  $('#supp-preview').innerHTML=(S.supps.whey||S.supps.creatine)
+    ?('<p class="hint" style="margin:12px 4px 8px;">Rappels de prise autour de ton entraînement :</p>'+suppTimelineHTML())
+    :'<p class="hint" style="margin-top:12px;">Active whey ou créatine pour voir tes rappels de prise.</p>';
 }
 $('#prog-choice').addEventListener('click',e=>{const c=e.target.closest('.pc');if(!c)return;S.program=c.dataset.prog;save();renderProgramme();toast(prog().emoji+' '+prog().label);});
+$('#plan-days').addEventListener('click',e=>{const c=e.target.closest('.dc');if(!c)return;const i=+c.dataset.day;const s=new Set(S.plan.days);s.has(i)?s.delete(i):s.add(i);S.plan.days=[...s].sort((a,b)=>a-b);save();renderPlanner();});
+$('#train-time').addEventListener('change',e=>{S.trainTime=e.target.value||'18:00';save();renderPlanner();});
+$('#tg-whey').onclick=()=>{S.supps.whey=!S.supps.whey;save();renderPlanner();};
+$('#tg-creatine').onclick=()=>{S.supps.creatine=!S.supps.creatine;save();renderPlanner();};
 
 /* ============ SÉANCES ============ */
 function renderSeances(){
