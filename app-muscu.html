@@ -166,6 +166,21 @@ tr.done .vbtn{background:var(--green);border-color:var(--green);color:#fff;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 canvas{max-width:100%;display:block;}
 .hint{font-size:12px;color:var(--muted);margin:2px 4px 12px;line-height:1.5;}
+/* ===== Coach 3D (three.js) ===== */
+.hero-txt{flex:1;min-width:0;}
+.hero{display:flex;gap:12px;align-items:stretch;}
+.hero-3d{flex:none;width:134px;border-radius:16px;background:rgba(255,255,255,.14);position:relative;overflow:hidden;}
+.c3d-card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;}
+.c3d-stage{position:relative;height:212px;background:linear-gradient(165deg,var(--card2),var(--card));}
+.c3d-stage canvas,.hero-3d canvas{position:absolute;inset:0;width:100%!important;height:100%!important;touch-action:pan-y;cursor:grab;}
+.c3d-tag{position:absolute;top:9px;left:11px;z-index:2;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:20px;padding:3px 9px;pointer-events:none;}
+.c3d-spin{position:absolute;bottom:9px;right:11px;z-index:2;font-size:10.5px;font-weight:600;color:var(--muted2);pointer-events:none;}
+.c3d-info{padding:11px 14px 13px;border-top:1px solid var(--border);}
+.c3d-name{font-weight:800;font-size:14.5px;}
+.c3d-cue{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4;}
+.c3d-btn{flex:none;align-self:flex-start;border:1px solid var(--border);background:var(--card2);color:var(--blue);font-family:inherit;font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:5px 8px;border-radius:9px;cursor:pointer;}
+.c3d-btn.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+html.no3d .c3d-card,html.no3d .hero-3d,html.no3d .c3d-btn{display:none!important;}
 </style>
 </head>
 <body>
@@ -181,10 +196,13 @@ canvas{max-width:100%;display:block;}
   <div class="onboard" id="onboard" style="display:none"></div>
   <div class="weekstrip" id="weekstrip"></div>
   <div class="hero" id="hero">
-    <div class="day" id="hero-prog">Programme</div>
-    <h2 id="hero-name">—</h2>
-    <div class="meta" id="hero-meta"></div>
-    <button class="btn btn-white" id="hero-start">Démarrer la séance ▶</button>
+    <div class="hero-txt">
+      <div class="day" id="hero-prog">Programme</div>
+      <h2 id="hero-name">—</h2>
+      <div class="meta" id="hero-meta"></div>
+      <button class="btn btn-white" id="hero-start">Démarrer la séance ▶</button>
+    </div>
+    <div class="hero-3d" id="hero-3d"></div>
   </div>
   <div class="stat-row">
     <div class="stat"><div class="n" id="st-week">0</div><div class="l">séances / sem.</div></div>
@@ -243,6 +261,10 @@ canvas{max-width:100%;display:block;}
     <button class="icon-btn" id="sess-close">✕</button>
   </div>
   <div class="sprog"><div class="sprog-bar"><i id="sprog-fill"></i></div><span id="sprog-txt">0 / 0</span></div>
+  <div class="c3d-card" id="sess-3d">
+    <div class="c3d-stage" id="sess-3d-stage"><span class="c3d-tag">Démo 3D</span><span class="c3d-spin">glisse pour tourner</span></div>
+    <div class="c3d-info"><div class="c3d-name" id="c3d-name">—</div><div class="c3d-cue" id="c3d-cue"></div></div>
+  </div>
   <div id="sess-exos"></div>
   <button class="btn btn-green" id="sess-finish" style="margin-top:6px;">Terminer la séance ✓</button>
 </section>
@@ -289,6 +311,10 @@ canvas{max-width:100%;display:block;}
     <div class="row" style="padding:6px 2px;border:none;">
       <div class="grow"><div class="t">Thème sombre</div><div class="s">Confort visuel en salle</div></div>
       <button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 16px;" id="p-theme">Basculer</button>
+    </div>
+    <div class="row" style="padding:6px 2px;border:none;">
+      <div class="grow"><div class="t">Démo 3D des mouvements</div><div class="s">Coach animé sur l'accueil et en séance</div></div>
+      <button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 16px;" id="p-3d">Activée</button>
     </div>
     <div class="row" style="padding:6px 2px;border:none;">
       <div class="grow"><div class="t">Réinitialiser</div><div class="s">Efface toutes les données locales</div></div>
@@ -494,7 +520,7 @@ const LIFTS = [
 
 /* ============ ÉTAT ============ */
 const DEFAULT = {
-  user:{name:'',weight:null,rest:90,theme:'light'},
+  user:{name:'',weight:null,rest:90,theme:'light',three:true},
   program:'masse',
   plan:{days:[0,2,4]},        // jours d'entraînement (0=Lun ... 6=Dim)
   trainTime:'18:00',           // heure d'entraînement (pour les compléments)
@@ -517,6 +543,12 @@ function todayStr(){return new Date().toISOString().slice(0,10);}
 function fmtDate(d){return new Date(d).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});}
 function icoTile(exo,size){const col=GROUPS[exo.groupe].color;return `<span class="exo-ico" style="background:${col}1f;color:${col}${size?`;width:${size}px;height:${size}px`:''}">${ICONS[exo.icon]||''}</span>`;}
 function prog(){return PROGRAMMES[S.program];}
+
+/* ---- pont vers le coach 3D (module three.js chargé plus bas) ---- */
+function show3D(mount,icon,color){
+  if(!window.Coach3D||!S.user.three)return;
+  window.Coach3D.show(document.querySelector(mount),icon,color);
+}
 
 /* ---- planning semaine + compléments ---- */
 const WEEKDAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
@@ -579,6 +611,7 @@ function renderAccueil(){
     $('#hero-meta').textContent=nx?`Prochaine séance : ${WEEKDAYS_FULL[nx.idx]} · ${p.days[nx.si].jour}`:'Choisis tes jours dans l\'onglet Programme';
     $('#hero-start').textContent='Voir mon planning';
     heroAction=()=>go('programme');
+    show3D('#hero-3d','idle','#ffffff');
   }else{
     const day=p.days[te.si];
     $('#hero').style.background=`linear-gradient(135deg,${p.color},${p.color}bb)`;
@@ -588,6 +621,7 @@ function renderAccueil(){
     $('#hero-meta').textContent=p.emoji+' '+p.label+' · '+sessionMeta(day);
     $('#hero-start').textContent='Démarrer la séance ▶';
     heroAction=()=>startSession(te.si);
+    show3D('#hero-3d',(day.exos.find(e=>e.type==='muscu')||day.exos[0]).icon,'#ffffff');
   }
   renderOnboard();
   renderHomeSupp();
@@ -686,6 +720,18 @@ function renderSeances(){
 
 /* ============ SÉANCE EN COURS ============ */
 let restTimer=null;
+let vue3d=null;                       // exo affiché en 3D (null = suit l'exo en cours)
+function view3d(ei){vue3d=ei;renderSession();$('#sess-3d').scrollIntoView({behavior:'smooth',block:'center'});}
+function sync3d(){
+  const a=S.active;if(!a)return -1;
+  let i=vue3d;
+  if(i==null||i<0||i>=a.exos.length){i=a.exos.findIndex(ex=>ex.series.some(s=>!s.done));if(i<0)i=a.exos.length-1;}
+  const ex=a.exos[i];
+  $('#c3d-name').textContent=ex.nom;
+  $('#c3d-cue').textContent=ex.cue||'';
+  show3D('#sess-3d-stage',ex.icon,GROUPS[ex.groupe].color);
+  return i;
+}
 function startSession(dayIdx){
   const day=prog().days[dayIdx];
   S.active={dayIdx,jour:day.jour,program:S.program,exos:day.exos.map(e=>{
@@ -693,7 +739,7 @@ function startSession(dayIdx){
     const p=predictedWeight(e);
     return{nom:e.nom,icon:e.icon,cue:cueFor(e),groupe:e.groupe,type:'muscu',reps:e.reps,series:Array.from({length:e.series},()=>({prevu:p,reel:p||'',repsFait:e.reps,done:false}))};
   })};
-  save();renderSession();
+  vue3d=null;save();renderSession();
   $$('.screen').forEach(s=>s.classList.remove('active'));$('#s-session').classList.add('active');$$('#nav button').forEach(b=>b.classList.remove('on'));window.scrollTo(0,0);
 }
 function renderSession(){
@@ -704,8 +750,9 @@ function renderSession(){
   const hint=hasMuscu
     ? '<p class="hint">💡 « Poids prévu » = suggestion d\'après ton test de force et tes séances passées. Ajuste « Poids réel », entre tes reps, puis valide ✓.</p>'
     : '<p class="hint">💡 Note la durée réelle en minutes pour chaque machine, puis valide ✓.</p>';
+  const cur=sync3d();
   $('#sess-exos').innerHTML=hint+a.exos.map((ex,ei)=>{
-    const head=`<div class="exo-head">${icoTile(ex)}<div class="htext"><span class="name">${ex.nom}</span>${cueFor(ex)?`<span class="cue">${cueFor(ex)}</span>`:''}</div><span class="target">${ex.type==='cardio'?ex.reps+' min':ex.series.length+' × '+ex.reps}</span></div>`;
+    const head=`<div class="exo-head">${icoTile(ex)}<div class="htext"><span class="name">${ex.nom}</span>${cueFor(ex)?`<span class="cue">${cueFor(ex)}</span>`:''}</div><span class="target">${ex.type==='cardio'?ex.reps+' min':ex.series.length+' × '+ex.reps}</span><button class="c3d-btn ${ei===cur?'on':''}" onclick="view3d(${ei})" title="Voir le mouvement en 3D">3D</button></div>`;
     if(ex.type==='cardio'){
       return `<div class="exo">${head}
         <table class="sets"><thead><tr><th>Bloc</th><th>Durée prévue</th><th>Durée réelle (min)</th><th>✓</th></tr></thead><tbody>
@@ -812,6 +859,7 @@ function renderPR(){
 /* ============ PROFIL ============ */
 function renderProfil(){
   $('#p-name').value=S.user.name;$('#p-weight').value=S.user.weight??'';$('#p-goal').value=S.program;$('#p-rest').value=S.user.rest;
+  $('#p-3d').textContent=S.user.three?'Activée':'Désactivée';
   const box=$('#force-test');
   box.innerHTML=LIFTS.map(l=>{const t=S.tests[l.key]||{};return `
     <div class="field" style="margin-bottom:12px;">
@@ -823,17 +871,589 @@ function renderProfil(){
 }
 $('#p-save').onclick=()=>{S.user.name=$('#p-name').value.trim();S.user.weight=parseFloat($('#p-weight').value)||null;S.program=$('#p-goal').value;S.user.rest=parseInt($('#p-rest').value)||90;save();toast('Profil enregistré ✓');};
 $('#p-theme').onclick=toggleTheme;
-$('#p-reset').onclick=()=>{if(confirm('Effacer TOUTES les données ?')){localStorage.removeItem('delrobi');S=structuredClone(DEFAULT);applyTheme();go('accueil');toast('Données réinitialisées');}};
+$('#p-3d').onclick=()=>{S.user.three=!S.user.three;save();set3D(S.user.three);renderProfil();toast(S.user.three?'Démo 3D activée 🧍':'Démo 3D désactivée');};
+$('#p-reset').onclick=()=>{if(confirm('Effacer TOUTES les données ?')){localStorage.removeItem('delrobi');S=structuredClone(DEFAULT);applyTheme();set3D(true);go('accueil');toast('Données réinitialisées');}};
 
 /* ============ THÈME ============ */
 function applyTheme(){document.documentElement.classList.toggle('dark',S.user.theme==='dark');$('#themeBtn').textContent=S.user.theme==='dark'?'☀️':'🌙';}
-function toggleTheme(){S.user.theme=S.user.theme==='dark'?'light':'dark';save();applyTheme();if($('#s-stats').classList.contains('active'))renderStats();}
+function toggleTheme(){S.user.theme=S.user.theme==='dark'?'light':'dark';save();applyTheme();if(window.Coach3D)window.Coach3D.theme();if($('#s-stats').classList.contains('active'))renderStats();}
+function set3D(on){if(window.Coach3D)window.Coach3D.setEnabled(on);}
 $('#themeBtn').onclick=toggleTheme;
 
 /* ============ INIT ============ */
+// le coach 3D arrive de façon asynchrone : on rebranche l'écran courant quand il est prêt
+window.addEventListener('coach3d-ready',()=>{
+  set3D(S.user.three);
+  if($('#s-session').classList.contains('active'))sync3d();
+  else if($('#s-accueil').classList.contains('active'))renderAccueil();
+});
 applyTheme();
 if(S.active){renderSession();$$('.screen').forEach(s=>s.classList.remove('active'));$('#s-session').classList.add('active');$$('#nav button').forEach(b=>b.classList.remove('on'));}
 else renderAccueil();
+</script>
+
+<script type="module">
+/* ==========================================================================
+   COACH 3D — démonstrateur de mouvements (three.js)
+   Tout est généré au vol : athlète low-poly animé en cinématique inverse
+   + machines de salle construites en primitives. Aucun fichier 3D externe.
+   Si three.js n'est pas joignable (hors-ligne) ou si WebGL manque, l'app
+   retombe simplement sur ses icônes SVG (classe .no3d).
+   ========================================================================== */
+(async ()=>{
+const HTML=document.documentElement, off=()=>HTML.classList.add('no3d');
+try{const c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return off();}catch(e){return off();}
+
+let T=null;
+for(const url of ['https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js',
+                  'https://unpkg.com/three@0.169.0/build/three.module.min.js',
+                  'https://esm.sh/three@0.169.0']){
+  try{T=await import(url);break;}catch(e){}
+}
+if(!T)return off();
+
+/* ---------------- petits outils ---------------- */
+const D=Math.PI/180, UP=new T.Vector3(0,1,0), DOWN=new T.Vector3(0,-1,0);
+const lerp=(a,b,p)=>a+(b-a)*p, clamp=(v,a,b)=>Math.min(Math.max(v,a),b);
+const V=(x,y,z)=>new T.Vector3(x||0,y||0,z||0);
+const mesh=(g,m,x,y,z)=>{const o=new T.Mesh(g,m);o.position.set(x||0,y||0,z||0);return o;};
+const box=(w,h,d,m,x,y,z)=>mesh(new T.BoxGeometry(w,h,d),m,x,y,z);
+const cyl=(r,h,m,x,y,z)=>mesh(new T.CylinderGeometry(r,r,h,14),m,x,y,z);
+const caps=(r,len,m,x,y,z)=>mesh(new T.CapsuleGeometry(r,Math.max(len-2*r,.01),4,12),m,x,y,z);
+
+const MAT={
+  skin :new T.MeshStandardMaterial({color:0xe9b48c,roughness:.85}),
+  hair :new T.MeshStandardMaterial({color:0x2a2320,roughness:.95}),
+  shirt:new T.MeshStandardMaterial({color:0x2f6bff,roughness:.55}),
+  short:new T.MeshStandardMaterial({color:0x1e2a44,roughness:.9}),
+  shoe :new T.MeshStandardMaterial({color:0xf4f6fb,roughness:.6}),
+  steel:new T.MeshStandardMaterial({color:0x93a1bb,roughness:.35,metalness:.6}),
+  pad  :new T.MeshStandardMaterial({color:0x222c44,roughness:.95}),
+  plate:new T.MeshStandardMaterial({color:0x3a4763,roughness:.55,metalness:.35}),
+  grip :new T.MeshStandardMaterial({color:0x11182a,roughness:1}),
+};
+
+/* ---------------- scène ---------------- */
+const rend=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:'low-power'});
+rend.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const cv=rend.domElement;
+const scene=new T.Scene();
+const cam=new T.PerspectiveCamera(36,1,.1,60);
+const world=new T.Group(); scene.add(world);   // pivot d'orbite (glisser du doigt)
+const stage=new T.Group(); world.add(stage);   // machine + athlète
+const props=new T.Group(); stage.add(props);   // machine du mouvement courant
+
+const hemi=new T.HemisphereLight(0xffffff,0x4b5675,1.05); scene.add(hemi);
+const key=new T.DirectionalLight(0xffffff,1.85); key.position.set(3.4,5,3.6); scene.add(key);
+const rim=new T.DirectionalLight(0x86aaff,.85); rim.position.set(-3.5,2.2,-3); scene.add(rim);
+
+const blobMat=new T.MeshBasicMaterial({transparent:true,depthWrite:false,opacity:1,map:(()=>{
+  const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+  const rg=g.createRadialGradient(64,64,4,64,64,62);
+  rg.addColorStop(0,'rgba(15,23,42,.40)');rg.addColorStop(1,'rgba(15,23,42,0)');
+  g.fillStyle=rg;g.fillRect(0,0,128,128);return new T.CanvasTexture(c);})()});
+const blob=mesh(new T.PlaneGeometry(2.8,2.8),blobMat,0,.008,.12);
+blob.rotation.x=-Math.PI/2; stage.add(blob);
+
+/* ---------------- l'athlète ---------------- */
+const LEN={arm:.30,fore:.28,thigh:.45,shin:.43};
+const body=new T.Group(); stage.add(body);
+const hips=new T.Group(); hips.position.y=.95; body.add(hips);
+const pelvis=caps(.145,.26,MAT.short,0,-.04,0); pelvis.scale.set(1.15,1,.82); hips.add(pelvis);
+const torso=new T.Group(); hips.add(torso);
+const chest=caps(.175,.44,MAT.shirt,0,.24,0); chest.scale.set(1.18,1,.76); torso.add(chest);
+torso.add(cyl(.052,.10,MAT.skin,0,.50,0));
+const head=new T.Group(); head.position.y=.545; torso.add(head);
+head.add(mesh(new T.SphereGeometry(.125,20,16),MAT.skin,0,.10,0));
+const hair=mesh(new T.SphereGeometry(.129,20,16,0,Math.PI*2,0,Math.PI*.52),MAT.hair,0,.105,0);
+hair.rotation.x=-.20; head.add(hair);
+
+function makeArm(s){
+  const sh=new T.Group(); sh.position.set(s*.205,.44,0); torso.add(sh);
+  sh.add(mesh(new T.SphereGeometry(.078,14,12),MAT.shirt,0,0,0));
+  sh.add(caps(.055,LEN.arm,MAT.skin,0,-LEN.arm/2,0));
+  const el=new T.Group(); el.position.y=-LEN.arm; sh.add(el);
+  el.add(caps(.048,LEN.fore,MAT.skin,0,-LEN.fore/2,0));
+  const hand=new T.Group(); hand.position.y=-LEN.fore; el.add(hand);
+  hand.add(mesh(new T.SphereGeometry(.058,12,10),MAT.skin,0,-.02,0));
+  return{sh,el,hand};
+}
+function makeLeg(s){
+  const hp=new T.Group(); hp.position.set(s*.105,-.06,0); hips.add(hp);
+  hp.add(caps(.085,LEN.thigh,MAT.short,0,-LEN.thigh/2,0));
+  const kn=new T.Group(); kn.position.y=-LEN.thigh; hp.add(kn);
+  kn.add(caps(.068,LEN.shin,MAT.skin,0,-LEN.shin/2,0));
+  const ft=new T.Group(); ft.position.y=-LEN.shin; kn.add(ft);
+  ft.add(box(.115,.075,.25,MAT.shoe,0,-.03,.055));
+  return{hp,kn,ft};
+}
+const armL=makeArm(-1), armR=makeArm(1), legL=makeLeg(-1), legR=makeLeg(1);
+
+/* ---------------- cinématique inverse à deux os ----------------
+   On pilote la position des mains et des pieds ; l'épaule/la hanche et
+   le coude/le genou sont résolus géométriquement. Le « pôle » indique
+   de quel côté l'articulation doit plier.                              */
+const qA=new T.Quaternion(),qB=new T.Quaternion(),qC=new T.Quaternion();
+const vS=new T.Vector3(),vD=new T.Vector3(),vN=new T.Vector3(),vU=new T.Vector3(),vE=new T.Vector3(),vT=new T.Vector3();
+function aim(pivot,dir){                       // pointe l'axe -Y du pivot vers dir (repère `body`)
+  qA.setFromUnitVectors(DOWN,dir);
+  body.getWorldQuaternion(qB);
+  pivot.parent.getWorldQuaternion(qC).invert();
+  pivot.quaternion.copy(qC.multiply(qB).multiply(qA));
+}
+function ik(a,b,l1,l2,target,pole){
+  body.updateMatrixWorld(true);
+  a.getWorldPosition(vS); body.worldToLocal(vS);
+  vD.subVectors(target,vS);
+  let d=vD.length()||.001; vD.multiplyScalar(1/d);
+  d=clamp(d,Math.abs(l1-l2)+.02,l1+l2-.02);
+  const A=Math.acos(clamp((l1*l1+d*d-l2*l2)/(2*l1*d),-1,1));
+  vN.crossVectors(vD,pole); if(vN.lengthSq()<1e-6)vN.set(1,0,0); vN.normalize();
+  vU.copy(vD).applyAxisAngle(vN,A);
+  aim(a,vU); a.updateMatrixWorld(true);
+  vE.copy(vS).addScaledVector(vU,l1);
+  vD.subVectors(target,vE);
+  if(vD.lengthSq()<1e-8)vD.copy(vU); else vD.normalize();
+  aim(b,vD); b.updateMatrixWorld(true);
+}
+function flatFoot(leg,pitch){                  // garde la chaussure à plat
+  leg.kn.getWorldQuaternion(qC).invert();
+  body.getWorldQuaternion(qB);
+  leg.ft.quaternion.copy(qC.multiply(qB));
+  if(pitch)leg.ft.rotateX(pitch);
+}
+
+/* ---------------- état de pose ---------------- */
+const P={
+  hips:V(0,.95,0), pitch:0, head:0, footPitch:0,
+  hl:V(),hr:V(),fl:V(),fr:V(),
+  armPole:V(0,-1,-.55), legPole:V(0,0,1)
+};
+function stand(){
+  P.hips.set(0,.95,0); P.pitch=0; P.head=0; P.footPitch=0;
+  P.hl.set(-.30,.75,.06); P.hr.set(.30,.75,.06);
+  P.fl.set(-.17,.075,.05); P.fr.set(.17,.075,.05);
+  P.armPole.set(0,-1,-.55); P.legPole.set(0,0,1);
+}
+function sit(z){
+  stand(); P.hips.set(0,.62,z||0);
+  P.fl.set(-.17,.075,.34); P.fr.set(.17,.075,.34);
+  P.hl.set(-.30,.80,.18); P.hr.set(.30,.80,.18);
+}
+function applyPose(){
+  hips.position.copy(P.hips);
+  torso.rotation.set(-P.pitch*D,0,0);
+  head.rotation.set(P.head*D,0,0);
+  body.updateMatrixWorld(true);
+  ik(armL.sh,armL.el,LEN.arm,LEN.fore,P.hl,P.armPole);
+  ik(armR.sh,armR.el,LEN.arm,LEN.fore,P.hr,P.armPole);
+  ik(legL.hp,legL.kn,LEN.thigh,LEN.shin,P.fl,P.legPole);
+  ik(legR.hp,legR.kn,LEN.thigh,LEN.shin,P.fr,P.legPole);
+  flatFoot(legL,P.footPitch); flatFoot(legR,P.footPitch);
+}
+
+/* ---------------- pièces de machines ---------------- */
+function bench(back,seatY,z){
+  const g=new T.Group();
+  g.add(box(.44,.09,.52,MAT.pad,0,seatY-.045,z));
+  g.add(box(.14,seatY-.09,.28,MAT.steel,0,(seatY-.09)/2,z-.02));
+  g.add(box(.52,.05,.62,MAT.steel,0,.03,z));
+  if(back){const b=box(.40,.54,.10,MAT.pad,0,seatY+.25,z-.30); b.rotation.x=-.15; g.add(b);}
+  return g;
+}
+function stackCol(x,z,h){
+  const g=new T.Group();
+  g.add(cyl(.028,h,MAT.steel,x-.13,h/2,z)); g.add(cyl(.028,h,MAT.steel,x+.13,h/2,z));
+  g.add(box(.44,.06,.34,MAT.steel,x,h,z));  g.add(box(.48,.05,.38,MAT.steel,x,.025,z));
+  const plates=new T.Group(); g.add(plates);
+  for(let i=0;i<7;i++)plates.add(box(.34,.055,.26,MAT.plate,x,.09+i*.07,z));
+  g.userData.plates=plates; return g;
+}
+function rod(r,m){return mesh(new T.CylinderGeometry(r,r,1,10),m||MAT.steel,0,0,0);}
+function setRod(o,a,b){
+  o.position.copy(a).add(b).multiplyScalar(.5);
+  vT.subVectors(b,a); const L=vT.length()||.001;
+  o.scale.set(1,L,1); o.quaternion.setFromUnitVectors(UP,vT.multiplyScalar(1/L));
+}
+function grip(){const o=cyl(.035,.17,MAT.grip,0,0,0);o.rotation.z=Math.PI/2;return o;}
+function wheel(r,m,x,y,z){const o=mesh(new T.TorusGeometry(r,.035,8,22),m,x,y,z);return o;}
+
+/* ---------------- catalogue des mouvements ----------------
+   cam  : position de caméra + hauteur visée
+   rate : répétitions par seconde
+   pose : positions des mains/pieds selon la phase p (0 = départ, 1 = contraction)
+   build: la machine + son animation                                     */
+const EX={
+
+idle:{cam:[2.1,1.35,2.6,.95],rate:.16,
+  build(){return{g:new T.Group(),up(){}}},
+  pose(p,t){stand();
+    const b=Math.sin(t*1.5)*.012;
+    P.hips.y=.95+b; P.pitch=2;
+    const y=lerp(.76,1.78,p), z=lerp(.10,.02,p), x=lerp(.30,.22,p);
+    P.hl.set(-x,y+b,z); P.hr.set(x,y+b,z);
+    P.armPole.set(0,-1,-.35); P.head=-p*8;}},
+
+chestpress:{cam:[2.4,1.35,2.5,1],rate:.45,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.06)); const st=stackCol(0,-1.0,1.05); g.add(st);
+    g.add(box(.09,1.45,.09,MAT.steel,-.52,.73,-.52)); g.add(box(.09,1.45,.09,MAT.steel,.52,.73,-.52));
+    const ar=[rod(.032),rod(.032)],gr=[grip(),grip()],piv=[V(-.52,1.10,-.52),V(.52,1.10,-.52)];
+    ar.concat(gr).forEach(o=>g.add(o));
+    return{g,up(p){st.userData.plates.position.y=p*.30;
+      [P.hl,P.hr].forEach((h,i)=>{setRod(ar[i],piv[i],h);gr[i].position.copy(h);});}};},
+  pose(p){sit();P.pitch=-3;
+    const z=lerp(.20,.60,p);
+    P.hl.set(-.31,1.06,z); P.hr.set(.31,1.06,z);}},
+
+pecdeck:{cam:[2.2,1.4,2.7,1],rate:.42,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.06)); const st=stackCol(0,-1.0,1.05); g.add(st);
+    g.add(box(.09,1.7,.09,MAT.steel,0,.85,-.55));
+    const ar=[rod(.03),rod(.03)],pd=[box(.06,.30,.11,MAT.pad),box(.06,.30,.11,MAT.pad)];
+    const piv=[V(-.30,1.58,-.50),V(.30,1.58,-.50)];
+    ar.concat(pd).forEach(o=>g.add(o));
+    return{g,up(p){st.userData.plates.position.y=p*.26;
+      [P.hl,P.hr].forEach((h,i)=>{setRod(ar[i],piv[i],h);pd[i].position.copy(h).add(V(i?.11:-.11,.05,-.02));});}};},
+  pose(p){sit();
+    const a=lerp(72,20,p)*D, r=.60;
+    P.hl.set(-Math.sin(a)*r,1.06,.10+Math.cos(a)*r);
+    P.hr.set( Math.sin(a)*r,1.06,.10+Math.cos(a)*r);
+    P.armPole.set(0,-1,-.15);}},
+
+latpull:{cam:[2.3,1.6,2.7,1.15],rate:.42,
+  build(){const g=new T.Group();
+    g.add(bench(false,.52,0)); const st=stackCol(0,-.95,1.35); g.add(st);
+    g.add(box(.09,2.15,.09,MAT.steel,-.5,1.07,-.72)); g.add(box(.09,2.15,.09,MAT.steel,.5,1.07,-.72));
+    g.add(box(1.1,.09,.16,MAT.steel,0,2.14,-.55));
+    g.add(box(.30,.14,.34,MAT.pad,0,.92,-.10));
+    const bar=cyl(.028,.86,MAT.steel,0,0,0); bar.rotation.z=Math.PI/2; g.add(bar);
+    const cab=rod(.012,MAT.grip); g.add(cab);
+    return{g,up(p){st.userData.plates.position.y=p*.34;
+      vT.copy(P.hl).add(P.hr).multiplyScalar(.5); bar.position.copy(vT);
+      setRod(cab,vT,V(0,2.10,-.50));}};},
+  pose(p){sit();P.pitch=-lerp(4,12,p);
+    const y=lerp(1.74,1.20,p), z=lerp(.10,.22,p);
+    P.hl.set(-.31,y,z); P.hr.set(.31,y,z);
+    P.armPole.set(0,-1,.2);}},
+
+row:{cam:[2.4,1.3,2.6,.95],rate:.42,
+  build(){const g=new T.Group();
+    g.add(bench(false,.52,-.05)); const st=stackCol(0,-.9,1.05); g.add(st);
+    g.add(box(.30,.44,.14,MAT.pad,0,.95,.52));            // repose-poitrine
+    g.add(box(.12,.90,.12,MAT.steel,0,.48,.60));
+    g.add(box(.34,.10,1.5,MAT.steel,0,.05,.35));
+    const bar=cyl(.026,.40,MAT.steel,0,0,0); bar.rotation.z=Math.PI/2;
+    const cab=rod(.012,MAT.grip); g.add(bar); g.add(cab);
+    return{g,up(p){st.userData.plates.position.y=p*.30;
+      vT.copy(P.hl).add(P.hr).multiplyScalar(.5); bar.position.copy(vT);
+      setRod(cab,vT,V(0,.66,.62));}};},
+  pose(p){sit();P.pitch=lerp(8,-6,p);
+    const z=lerp(.88,.26,p);
+    P.hl.set(-.17,.98,z); P.hr.set(.17,.98,z);
+    P.armPole.set(0,-1,-.7);}},
+
+shoulderpress:{cam:[2.4,1.6,2.6,1.15],rate:.45,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.06)); const st=stackCol(0,-1.0,1.05); g.add(st);
+    g.add(box(.09,1.9,.09,MAT.steel,-.46,.95,-.60)); g.add(box(.09,1.9,.09,MAT.steel,.46,.95,-.60));
+    const ar=[rod(.032),rod(.032)],gr=[grip(),grip()],piv=[V(-.46,1.16,-.60),V(.46,1.16,-.60)];
+    ar.concat(gr).forEach(o=>g.add(o));
+    return{g,up(p){st.userData.plates.position.y=p*.30;
+      [P.hl,P.hr].forEach((h,i)=>{setRod(ar[i],piv[i],h);gr[i].position.copy(h);});}};},
+  pose(p){sit();
+    const y=lerp(1.24,1.84,p), x=lerp(.36,.26,p);
+    P.hl.set(-x,y,.10); P.hr.set(x,y,.10);
+    P.armPole.set(0,-1,-.3);}},
+
+legpress:{cam:[3.2,1.45,.35,.70],rate:.4,
+  build(){const g=new T.Group();
+    const seat=box(.46,.10,.54,MAT.pad,0,.44,-.34); seat.rotation.x=.12; g.add(seat);
+    const bk=box(.42,.56,.11,MAT.pad,0,.72,-.60); bk.rotation.x=-.42; g.add(bk);
+    g.add(box(.16,.44,.30,MAT.steel,0,.22,-.40));
+    g.add(box(.10,.10,1.5,MAT.steel,-.30,.28,.20)); g.add(box(.10,.10,1.5,MAT.steel,.30,.28,.20));
+    const sled=new T.Group(); g.add(sled);
+    const plat=box(.52,.50,.08,MAT.steel,0,0,0); plat.rotation.x=1.25; sled.add(plat);
+    sled.add(mesh(new T.CylinderGeometry(.15,.15,.05,20),MAT.plate,-.31,.20,.20));
+    sled.add(mesh(new T.CylinderGeometry(.15,.15,.05,20),MAT.plate,.31,.20,.20));
+    sled.children[1].rotation.z=Math.PI/2; sled.children[2].rotation.z=Math.PI/2;
+    return{g,up(){vT.copy(P.fl).add(P.fr).multiplyScalar(.5); sled.position.copy(vT).add(V(0,.10,.08));}};},
+  pose(p){stand();P.hips.set(0,.60,-.34);P.pitch=-32;P.footPitch=-1.15;
+    const y=lerp(.74,.92,p), z=lerp(.26,.50,p);
+    P.fl.set(-.19,y,z); P.fr.set(.19,y,z);
+    P.hl.set(-.36,.62,-.20); P.hr.set(.36,.62,-.20);
+    P.legPole.set(0,.2,1);}},
+
+legext:{cam:[2.5,1.2,2.6,.8],rate:.45,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.10)); const st=stackCol(0,-.95,1.0); g.add(st);
+    const lev=rod(.03),pad=cyl(.075,.34,MAT.pad,0,0,0); pad.rotation.z=Math.PI/2;
+    g.add(lev); g.add(pad);
+    return{g,up(p){st.userData.plates.position.y=p*.28;
+      vT.copy(P.fl).add(P.fr).multiplyScalar(.5).add(V(0,.03,.10));
+      pad.position.copy(vT); setRod(lev,V(0,.30,.16),vT);}};},
+  pose(p){sit(-.06);
+    const y=lerp(.10,.56,p), z=lerp(.36,.72,p);
+    P.fl.set(-.17,y,z); P.fr.set(.17,y,z);
+    P.hl.set(-.34,.60,-.16); P.hr.set(.34,.60,-.16);
+    P.footPitch=-.5*p;}},
+
+glutes:{cam:[1.7,1.35,3.0,.9],rate:.4,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.06)); const st=stackCol(0,-.95,1.0); g.add(st);
+    const pd=[box(.07,.26,.30,MAT.pad),box(.07,.26,.30,MAT.pad)];
+    const ar=[rod(.026),rod(.026)]; pd.concat(ar).forEach(o=>g.add(o));
+    return{g,up(p){st.userData.plates.position.y=p*.24;
+      const x=lerp(.22,.52,p);
+      pd[0].position.set(-x-.13,.58,.26); pd[1].position.set(x+.13,.58,.26);
+      setRod(ar[0],V(-.12,1.00,-.16),pd[0].position); setRod(ar[1],V(.12,1.00,-.16),pd[1].position);}};},
+  pose(p){sit();
+    const x=lerp(.13,.44,p);
+    P.fl.set(-x,.10,.38); P.fr.set(x,.10,.38);
+    P.hl.set(-.32,.62,-.12); P.hr.set(.32,.62,-.12);
+    P.legPole.set(0,-.15,1);}},
+
+biceps:{cam:[2.2,1.3,2.6,.95],rate:.5,
+  build(){const g=new T.Group();
+    g.add(bench(false,.52,-.20)); const st=stackCol(0,-.95,.95); g.add(st);
+    const pd=box(.44,.08,.28,MAT.pad,0,.80,.34); pd.rotation.x=.35; g.add(pd);
+    g.add(box(.14,.40,.14,MAT.steel,0,.60,.36));
+    const bar=cyl(.026,.44,MAT.steel,0,0,0); bar.rotation.z=Math.PI/2; g.add(bar);
+    const lev=rod(.022); g.add(lev);
+    return{g,up(p){st.userData.plates.position.y=p*.24;
+      vT.copy(P.hl).add(P.hr).multiplyScalar(.5); bar.position.copy(vT);
+      setRod(lev,V(0,.70,.32),vT);}};},
+  pose(p){sit(-.12);P.pitch=10;
+    const y=lerp(.74,1.18,p), z=lerp(.62,.36,p);
+    P.hl.set(-.20,y,z); P.hr.set(.20,y,z);
+    P.armPole.set(0,-1,.75);}},
+
+triceps:{cam:[2.2,1.4,2.6,1],rate:.5,
+  build(){const g=new T.Group();
+    const st=stackCol(0,-.55,1.6); g.add(st);
+    g.add(box(.09,2.05,.09,MAT.steel,-.42,1.02,-.55)); g.add(box(.09,2.05,.09,MAT.steel,.42,1.02,-.55));
+    g.add(box(.94,.09,.5,MAT.steel,0,2.04,-.38));
+    const bar=cyl(.026,.42,MAT.steel,0,0,0); bar.rotation.z=Math.PI/2; g.add(bar);
+    const cab=rod(.012,MAT.grip); g.add(cab);
+    return{g,up(p){st.userData.plates.position.y=p*.36;
+      vT.copy(P.hl).add(P.hr).multiplyScalar(.5); bar.position.copy(vT);
+      setRod(cab,vT,V(0,2.00,-.20));}};},
+  pose(p){stand();P.pitch=8;
+    const y=lerp(1.16,.80,p);
+    P.hl.set(-.16,y,.30); P.hr.set(.16,y,.30);
+    P.armPole.set(0,-.4,-1);}},
+
+abs:{cam:[2.4,1.3,2.5,.95],rate:.45,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.06)); const st=stackCol(0,-.95,1.0); g.add(st);
+    const gr=[grip(),grip()],ar=[rod(.022),rod(.022)];
+    const bar=cyl(.024,.64,MAT.steel,0,0,0); bar.rotation.z=Math.PI/2;
+    gr.concat(ar).forEach(o=>g.add(o)); g.add(bar);
+    g.add(box(.09,1.55,.09,MAT.steel,-.44,.78,-.50)); g.add(box(.09,1.55,.09,MAT.steel,.44,.78,-.50));
+    g.add(box(.34,.10,.30,MAT.pad,0,.30,.34));           // cale-pieds
+    return{g,up(p){st.userData.plates.position.y=p*.24;
+      vT.copy(P.hl).add(P.hr).multiplyScalar(.5); bar.position.copy(vT);
+      [P.hl,P.hr].forEach((h,i)=>{gr[i].position.copy(h);
+        setRod(ar[i],V((i?1:-1)*.44,1.50,-.50),V(h.x+(i?.16:-.16),h.y,h.z));});}};},
+  pose(p){sit();P.pitch=lerp(-4,34,p);P.head=lerp(0,14,p);
+    const y=lerp(1.30,1.06,p), z=lerp(.06,.32,p);
+    P.hl.set(-.28,y,z); P.hr.set(.28,y,z);
+    P.fl.set(-.17,.30,.40); P.fr.set(.17,.30,.40);
+    P.armPole.set(0,-1,-.2);}},
+
+hipthrust:{cam:[2.9,1.05,2.2,.5],rate:.45,
+  build(){const g=new T.Group();
+    g.add(box(.66,.10,.72,MAT.pad,0,.46,-.56)); g.add(box(.20,.42,.34,MAT.steel,0,.23,-.62));
+    const bar=cyl(.028,1.0,MAT.steel,0,0,0); bar.rotation.z=Math.PI/2;
+    const pl=[mesh(new T.CylinderGeometry(.22,.22,.06,20),MAT.plate),mesh(new T.CylinderGeometry(.22,.22,.06,20),MAT.plate)];
+    pl.forEach(o=>{o.rotation.z=Math.PI/2;g.add(o);}); g.add(bar);
+    const hp=box(.30,.10,.20,MAT.pad,0,0,0); g.add(hp);
+    return{g,up(){const c=V(0,P.hips.y+.15,P.hips.z+.06);
+      bar.position.copy(c); hp.position.copy(c).add(V(0,-.05,0));
+      pl[0].position.copy(c).add(V(-.46,0,0)); pl[1].position.copy(c).add(V(.46,0,0));}};},
+  pose(p){stand();
+    const y=lerp(.20,.46,p), pit=lerp(43,84,p);
+    P.hips.set(0,y,-.38+.44*Math.sin(pit*D)); P.pitch=-pit;
+    P.fl.set(-.20,.075,.62); P.fr.set(.20,.075,.62);
+    P.hl.set(-.34,y+.16,.06); P.hr.set(.34,y+.16,.06);
+    P.armPole.set(0,-1,-.4); P.head=-10;}},
+
+treadmill:{cam:[2.5,1.5,2.7,1.05],rate:1.05,cyclic:true,
+  build(){const g=new T.Group();
+    g.add(box(.62,.09,1.5,MAT.grip,0,.14,.05));            // tapis
+    g.add(box(.74,.10,1.62,MAT.steel,0,.07,.05));
+    g.add(box(.08,.95,.08,MAT.steel,-.34,.6,.72)); g.add(box(.08,.95,.08,MAT.steel,.34,.6,.72));
+    g.add(box(.80,.30,.10,MAT.pad,0,1.12,.74));            // console
+    g.add(box(.06,.06,.6,MAT.steel,-.34,1.02,.44)); g.add(box(.06,.06,.6,MAT.steel,.34,1.02,.44));
+    return{g,up(){}};},
+  pose(p,t){stand();
+    const a=t*Math.PI*2, deck=.19;
+    const foot=(o,s)=>{const s1=Math.sin(a+o);
+      return V(s*.16,deck+Math.max(0,s1)*.20,.06-Math.cos(a+o)*.28);};
+    P.fl.copy(foot(0,-1)); P.fr.copy(foot(Math.PI,1));
+    P.hips.set(0,deck+.94+Math.abs(Math.sin(a))*.02,.02); P.pitch=5;
+    P.hl.set(-.26,deck+.86,.12+Math.cos(a+Math.PI)*.22);
+    P.hr.set(.26,deck+.86,.12+Math.cos(a)*.22);
+    P.armPole.set(0,-1,-.6);}},
+
+bike:{cam:[2.5,1.35,2.6,.95],rate:.75,cyclic:true,
+  build(){const g=new T.Group();
+    g.add(box(.30,.08,1.4,MAT.steel,0,.05,.10));
+    const post=box(.10,.60,.12,MAT.steel,0,.48,-.16); post.rotation.x=-.12; g.add(post);
+    g.add(box(.34,.09,.30,MAT.pad,0,.78,-.14));            // selle
+    g.add(box(.09,.62,.09,MAT.steel,0,.60,.54));
+    g.add(box(.44,.06,.08,MAT.steel,0,.96,.52));           // guidon
+    const fly=wheel(.26,MAT.steel,0,.44,.72); fly.rotation.y=Math.PI/2; g.add(fly);
+    const cr=new T.Group(); cr.position.set(0,.40,.30); g.add(cr);
+    const axle=cyl(.03,.36,MAT.steel,0,0,0); axle.rotation.z=Math.PI/2; cr.add(axle);
+    cr.add(box(.05,.34,.05,MAT.steel,-.17,-.17,0));         // manivelles opposées
+    cr.add(box(.05,.34,.05,MAT.steel,.17,.17,0));
+    const ped=[box(.13,.04,.18,MAT.grip),box(.13,.04,.18,MAT.grip)];
+    ped.forEach(o=>g.add(o));
+    return{g,up(p,t){fly.rotation.z=-t*Math.PI*2*3; cr.rotation.x=-t*Math.PI*2;
+      ped[0].position.copy(P.fl).add(V(0,-.05,0)); ped[1].position.copy(P.fr).add(V(0,-.05,0));}};},
+  pose(p,t){stand();
+    const a=t*Math.PI*2, c=V(0,.40,.30), r=.17;
+    P.hips.set(0,.86,-.14); P.pitch=16;
+    P.fl.set(-.16,c.y+Math.sin(a)*r,c.z+Math.cos(a)*r);
+    P.fr.set(.16,c.y+Math.sin(a+Math.PI)*r,c.z+Math.cos(a+Math.PI)*r);
+    P.hl.set(-.20,1.00,.50); P.hr.set(.20,1.00,.50);
+    P.legPole.set(0,.1,1); P.footPitch=-.25;}},
+
+rower:{cam:[2.7,1.15,2.5,.65],rate:.45,
+  build(){const g=new T.Group();
+    g.add(box(.16,.08,1.7,MAT.steel,0,.28,.10));           // rail
+    g.add(box(.30,.06,.34,MAT.steel,0,.06,-.62)); g.add(box(.30,.06,.34,MAT.steel,0,.06,.86));
+    const fly=wheel(.24,MAT.steel,0,.42,1.06); fly.rotation.y=Math.PI/2; g.add(fly);
+    g.add(box(.44,.08,.30,MAT.pad,0,.36,.92)); g.add(box(.44,.30,.06,MAT.grip,0,.44,1.00));
+    const seat=box(.34,.08,.28,MAT.pad,0,0,0); g.add(seat);
+    const bar=cyl(.024,.40,MAT.steel,0,0,0); bar.rotation.z=Math.PI/2; g.add(bar);
+    const cab=rod(.011,MAT.grip); g.add(cab);
+    return{g,up(p,t){fly.rotation.z=-t*Math.PI*2*2.2;
+      seat.position.set(0,.34,P.hips.z);
+      vT.copy(P.hl).add(P.hr).multiplyScalar(.5); bar.position.copy(vT);
+      setRod(cab,vT,V(0,.55,.98));}};},
+  pose(p){stand();
+    P.hips.set(0,.42,lerp(.50,.08,p)); P.pitch=lerp(26,-20,p);
+    P.fl.set(-.15,.34,.86); P.fr.set(.15,.34,.86);
+    const hz=lerp(.94,.28,p), hy=lerp(.70,.78,p);
+    P.hl.set(-.15,hy,hz); P.hr.set(.15,hy,hz);
+    P.armPole.set(0,-1,-.5); P.legPole.set(0,.3,1); P.footPitch=-.6;}},
+
+elliptical:{cam:[2.6,1.5,2.7,1.05],rate:.7,cyclic:true,
+  build(){const g=new T.Group();
+    g.add(box(.42,.08,1.6,MAT.steel,0,.05,.10));
+    g.add(box(.10,1.6,.10,MAT.steel,0,.80,.72));
+    const fly=wheel(.28,MAT.steel,0,.46,.86); fly.rotation.y=Math.PI/2; g.add(fly);
+    g.add(box(.46,.24,.10,MAT.pad,0,1.42,.70));
+    const ped=[box(.15,.05,.44,MAT.grip),box(.15,.05,.44,MAT.grip)];
+    const arms=[rod(.026),rod(.026)],hl=[grip(),grip()];
+    ped.concat(arms,hl).forEach(o=>g.add(o));
+    return{g,up(){ped[0].position.copy(P.fl).add(V(0,-.05,0)); ped[1].position.copy(P.fr).add(V(0,-.05,0));
+      hl[0].position.copy(P.hl); hl[1].position.copy(P.hr);
+      setRod(arms[0],V(-.26,1.60,.62),P.hl); setRod(arms[1],V(.26,1.60,.62),P.hr);}};},
+  pose(p,t){stand();
+    const a=t*Math.PI*2;
+    P.hips.set(0,1.12+Math.sin(a*2)*.015,0); P.pitch=4;
+    P.fl.set(-.17,.36+Math.sin(a)*.07,.10-Math.cos(a)*.26);
+    P.fr.set(.17,.36+Math.sin(a+Math.PI)*.07,.10-Math.cos(a+Math.PI)*.26);
+    P.hl.set(-.26,1.24,.34+Math.cos(a)*.20);
+    P.hr.set(.26,1.24,.34+Math.cos(a+Math.PI)*.20);
+    P.armPole.set(0,-1,-.7); P.legPole.set(0,.15,1);}},
+
+stair:{cam:[2.5,1.6,2.7,1.1],rate:.8,cyclic:true,
+  build(){const g=new T.Group();
+    g.add(box(.08,1.3,.08,MAT.steel,-.46,.65,.52)); g.add(box(.08,1.3,.08,MAT.steel,.46,.65,.52));
+    g.add(box(.06,.06,1.0,MAT.steel,-.46,1.00,.10)); g.add(box(.06,.06,1.0,MAT.steel,.46,1.00,.10));
+    const steps=[];for(let i=0;i<5;i++){const s=box(.62,.07,.26,MAT.grip,0,0,0);steps.push(s);g.add(s);}
+    return{g,up(p,t){steps.forEach((s,i)=>{
+      const u=((i/5)+t)%1;                                  // marches qui défilent vers le bas
+      s.position.set(0,.86-u*.78,.34-u*.30);});}};},
+  pose(p,t){stand();
+    const a=t*Math.PI*2;
+    const foot=(o,s)=>{const u=Math.max(0,Math.sin(a+o));
+      return V(s*.16,.12+u*.30,.10+u*.20);};
+    P.fl.copy(foot(0,-1)); P.fr.copy(foot(Math.PI,1));
+    P.hips.set(0,1.00+Math.abs(Math.sin(a))*.03,-.02); P.pitch=6;
+    P.hl.set(-.42,.98,.24); P.hr.set(.42,.98,.24);
+    P.legPole.set(0,.1,1);}}
+};
+
+/* ---------------- moteur ---------------- */
+let curKey=null, curProp=null, mountEl=null, tSec=0, last=0, raf=0, visTick=0;
+let visible=false, enabled=true, spin=0, drag=null, camBase=V(2.4,1.4,2.6), camY=.95;
+
+function clearProps(){
+  props.traverse(o=>{if(o.isMesh){o.geometry.dispose();}});
+  props.clear(); curProp=null;
+}
+function setExercise(k){
+  clearProps();
+  const ex=EX[k]||EX.idle;
+  curProp=ex.build(); props.add(curProp.g);
+  camBase.set(ex.cam[0],ex.cam[1],ex.cam[2]); camY=ex.cam[3];
+  curKey=k; tSec=0; applyCam();
+}
+function applyCam(){
+  if(!mountEl)return;
+  const w=mountEl.clientWidth||1, h=mountEl.clientHeight||1, a=w/h;
+  const f=a<1.35?clamp(1.18/a,1,1.7):.92;                   // vignette étroite → on recule
+  cam.aspect=a; cam.position.copy(camBase).multiplyScalar(f);
+  cam.lookAt(0,camY,0); cam.updateProjectionMatrix();
+  rend.setSize(w,h,false);
+}
+function checkVis(now){                                     // pas de rendu hors écran
+  if(now-visTick<400)return; visTick=now;
+  if(!mountEl){visible=false;return;}
+  const r=mountEl.getBoundingClientRect();
+  visible=r.width>2&&r.height>2&&r.bottom>-40&&r.top<(window.innerHeight||600)+40;
+}
+function frame(now){
+  raf=requestAnimationFrame(frame);
+  const dt=Math.min((now-last)/1000,.06); last=now;
+  checkVis(now);
+  if(!visible||document.hidden||!enabled)return;
+  tSec+=dt;
+  const ex=EX[curKey]||EX.idle;
+  const t=tSec*ex.rate;
+  const p=ex.cyclic?0:(1-Math.cos(t*Math.PI*2))/2;
+  ex.pose(p,t);
+  applyPose();
+  if(curProp)curProp.up(p,t);
+  world.rotation.y=spin+Math.sin(tSec*.28)*.26;
+  rend.render(scene,cam);
+}
+function start(){if(!raf){last=performance.now();raf=requestAnimationFrame(frame);}}
+
+new ResizeObserver(applyCam).observe(cv);
+
+cv.addEventListener('pointerdown',e=>{drag=e.clientX;cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';});
+cv.addEventListener('pointermove',e=>{if(drag==null)return;spin+=(e.clientX-drag)*.012;drag=e.clientX;});
+['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{drag=null;cv.style.cursor='grab';}));
+
+/* ---------------- API pour l'app ---------------- */
+window.Coach3D={
+  show(el,icon,color){
+    if(!enabled||!el)return;
+    const k=EX[icon]?icon:'idle';
+    if(mountEl!==el){el.appendChild(cv);mountEl=el;applyCam();}
+    if(color)MAT.shirt.color.set(color);
+    if(k!==curKey)setExercise(k);
+    visible=true; visTick=0; start();
+  },
+  setEnabled(on){
+    enabled=!!on; HTML.classList.toggle('no3d',!enabled);
+    if(!enabled&&cv.parentNode){cv.parentNode.removeChild(cv);mountEl=null;}
+  },
+  theme(){
+    const dark=HTML.classList.contains('dark');
+    blobMat.opacity=dark?.55:1; hemi.groundColor.set(dark?0x2a3350:0x4b5675);
+  }
+};
+setExercise('idle');
+window.Coach3D.theme();
+window.dispatchEvent(new Event('coach3d-ready'));
+})();
 </script>
 </body>
 </html>

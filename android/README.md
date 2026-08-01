@@ -29,4 +29,6 @@ cd android
 - `minSdk` 26 (Android 8.0+), `targetSdk`/`compileSdk` 34
 - APK **debug** signé avec la clé de debug → parfait pour tester, pas pour le Play Store
 - `localStorage` activé (`domStorage`) : les séances sont sauvegardées dans l'app
-- Permission `INTERNET` uniquement pour charger la police web (l'app fonctionne hors-ligne)
+- Permission `INTERNET` uniquement pour la police web et three.js (démo 3D des mouvements),
+  tous deux chargés depuis un CDN. Sans réseau, l'app fonctionne normalement : la démo 3D
+  s'efface et les icônes des machines restent affichées
