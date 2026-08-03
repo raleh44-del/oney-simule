@@ -181,6 +181,38 @@ canvas{max-width:100%;display:block;}
 .c3d-btn{flex:none;align-self:flex-start;border:1px solid var(--border);background:var(--card2);color:var(--blue);font-family:inherit;font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:5px 8px;border-radius:9px;cursor:pointer;}
 .c3d-btn.on{background:var(--blue);border-color:var(--blue);color:#fff;}
 html.no3d .c3d-card,html.no3d .hero-3d,html.no3d .c3d-btn{display:none!important;}
+/* ===== Composition corporelle (MovingLife / Santé) ===== */
+.nav{grid-template-columns:repeat(6,1fr);}
+@media(max-width:370px){.nav button .lab{font-size:9px;}.nav button .ico{font-size:18px;}}
+.mes-hero{color:#fff;border:none;border-radius:20px;padding:18px 20px;background:linear-gradient(135deg,var(--blue),#5b8cff);box-shadow:0 8px 24px rgba(47,107,255,.32);margin-bottom:12px;}
+.mes-hero .l{font-size:12.5px;opacity:.9;font-weight:600;}
+.mes-hero .big{font-size:38px;font-weight:800;letter-spacing:-1px;line-height:1.05;margin:2px 0 2px;font-variant-numeric:tabular-nums;}
+.mes-hero .big small{font-size:16px;font-weight:700;opacity:.85;margin-left:3px;}
+.mes-hero .sub{font-size:12.5px;opacity:.92;}
+.mes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.mtile{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 13px;box-shadow:var(--shadow);}
+.mtile .k{font-size:11px;color:var(--muted);font-weight:700;}
+.mtile .v{font-size:19px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums;}
+.mtile .v span{font-size:12px;font-weight:700;color:var(--muted);margin-left:2px;}
+.delta{font-size:11.5px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;}
+.delta.up{color:var(--green);}.delta.down{color:var(--red);}.delta.flat{color:var(--muted2);}
+.goal-wrap{display:flex;align-items:center;gap:10px;margin-top:10px;}
+.goal-bar{flex:1;height:9px;border-radius:6px;background:rgba(255,255,255,.28);overflow:hidden;}
+.goal-bar i{display:block;height:100%;background:#fff;width:0;transition:width .4s ease;}
+.src-pill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.3px;padding:3px 8px;border-radius:20px;background:var(--blue-soft);color:var(--blue);}
+.imp-zone{width:100%;min-height:96px;padding:11px 12px;border:1px dashed var(--border2,var(--border));border-radius:12px;background:var(--card2);color:var(--text);font-family:inherit;font-size:12.5px;resize:vertical;}
+.imp-zone:focus{outline:none;border-color:var(--blue);}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.mes-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);}
+.mes-row:last-child{border-bottom:none;}
+.mes-row .d{font-size:12.5px;font-weight:700;width:74px;flex:none;}
+.mes-row .w{font-weight:800;font-variant-numeric:tabular-nums;}
+.mes-row .x{margin-left:auto;border:none;background:none;color:var(--muted2);font-size:17px;cursor:pointer;font-family:inherit;padding:2px 4px;}
+.acc{border-top:1px solid var(--border);padding:12px 2px 2px;}
+.acc summary{font-size:13px;font-weight:700;cursor:pointer;list-style:none;color:var(--blue);}
+.acc summary::-webkit-details-marker{display:none;}
+.acc ol{margin:10px 0 4px 18px;font-size:12.5px;color:var(--muted);line-height:1.6;}
+.acc code{background:var(--card2);border:1px solid var(--border);border-radius:5px;padding:1px 5px;font-size:11.5px;word-break:break-all;}
 </style>
 </head>
 <body>
@@ -209,6 +241,7 @@ html.no3d .c3d-card,html.no3d .hero-3d,html.no3d .c3d-btn{display:none!important
     <div class="stat"><div class="n" id="st-streak">0</div><div class="l">jours de suite</div></div>
     <div class="stat"><div class="n" id="st-cardio">0</div><div class="l">min cardio</div></div>
   </div>
+  <div id="home-body" style="display:none"></div>
   <div id="home-supp" style="display:none"></div>
   <div class="section-title">Reprendre</div>
   <div class="card pad0" id="home-recent"></div>
@@ -285,6 +318,43 @@ html.no3d .c3d-card,html.no3d .hero-3d,html.no3d .c3d-btn{display:none!important
   </div>
   <div class="section-title">Records personnels</div>
   <div class="card" id="pr-list"></div>
+  <div class="section-title">Composition corporelle</div>
+  <div class="card pad0" id="stats-body"></div>
+</section>
+
+<!-- CORPS (composition corporelle) -->
+<section class="screen" id="s-corps">
+  <div id="mes-top"></div>
+  <div class="section-title">Suivi</div>
+  <div class="card"><canvas id="chart-poids" width="440" height="170"></canvas></div>
+  <div class="card" id="card-mg"><canvas id="chart-mg" width="440" height="150"></canvas></div>
+
+  <div class="section-title">Synchroniser MovingLife</div>
+  <div class="card">
+    <p class="hint" style="margin:0 0 10px 2px;">Envoie tes pesées de MovingLife vers <b>Apple Santé</b> ou <b>Health Connect</b>, puis récupère-les ici. Le collage et le fichier marchent sur les deux téléphones.</p>
+    <button class="btn btn-blue btn-sm" id="mes-sync" style="display:none;">📲 Synchroniser depuis Santé</button>
+    <textarea class="imp-zone" id="imp-text" placeholder="Colle ici tes mesures (JSON, CSV, ou export Apple Santé)&#10;ex : 03/08/2026 ; 78,4 ; 18,2 ; 34,1"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-blue btn-sm" id="imp-go">Analyser</button>
+      <button class="btn btn-ghost btn-sm" id="imp-pick">Choisir un fichier</button>
+    </div>
+    <input type="file" id="imp-file" accept=".csv,.json,.xml,.txt,.tsv" style="display:none;">
+    <details class="acc" style="margin-top:14px;">
+      <summary>Comment sortir mes mesures de MovingLife ?</summary>
+      <ol>
+        <li><b>iPhone</b> — dans MovingLife, active le partage vers <b>Santé</b>. Puis crée un raccourci (app Raccourcis) : « Trouver les échantillons de santé » (Poids, Masse grasse) → « Copier dans le presse-papiers », et colle le résultat ci-dessus.</li>
+        <li><b>Android</b> — active le partage vers <b>Health Connect</b>, puis utilise l'export de Health Connect (Réglages → Exporter les données) et choisis le fichier CSV ici.</li>
+        <li><b>Sans passer par Santé</b> — recopie simplement ta pesée dans « Ajouter une mesure ».</li>
+        <li>Un raccourci peut aussi ouvrir Delrobi avec les données dans l'adresse : <code>…/index.html#mesures=[{"date":"2026-08-03","poids":78.4}]</code> — l'import est alors automatique.</li>
+      </ol>
+    </details>
+  </div>
+
+  <div class="section-title">Ajouter une mesure</div>
+  <div class="card" id="mes-form"></div>
+
+  <div class="section-title">Historique</div>
+  <div class="card pad0" id="mes-list"></div>
 </section>
 
 <!-- PROFIL -->
@@ -297,6 +367,10 @@ html.no3d .c3d-card,html.no3d .hero-3d,html.no3d .c3d-btn{display:none!important
       <div class="field"><label>Objectif</label>
         <select id="p-goal"><option value="masse">Prise de masse</option><option value="perte">Perte de poids</option><option value="cardio">Cardio</option><option value="femmes">Spécial femmes</option><option value="hommes">Spécial hommes</option></select>
       </div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Taille (cm)</label><input id="p-taille" type="number" inputmode="numeric" placeholder="178"></div>
+      <div class="field"><label>Poids objectif (kg)</label><input id="p-objectif" type="number" step="0.1" inputmode="decimal" placeholder="75"></div>
     </div>
     <div class="field"><label>Repos par défaut (sec.)</label><input id="p-rest" type="number" inputmode="numeric" placeholder="90"></div>
     <button class="btn btn-blue btn-sm" id="p-save">Enregistrer</button>
@@ -328,6 +402,7 @@ html.no3d .c3d-card,html.no3d .hero-3d,html.no3d .c3d-btn{display:none!important
   <button data-go="programme"><span class="ico">📋</span><span class="lab">Programme</span></button>
   <button data-go="seances"><span class="ico">🏋️</span><span class="lab">Séances</span></button>
   <button data-go="stats"><span class="ico">📊</span><span class="lab">Stats</span></button>
+  <button data-go="corps"><span class="ico">⚖️</span><span class="lab">Corps</span></button>
   <button data-go="profil"><span class="ico">👤</span><span class="lab">Profil</span></button>
 </nav>
 
@@ -520,13 +595,14 @@ const LIFTS = [
 
 /* ============ ÉTAT ============ */
 const DEFAULT = {
-  user:{name:'',weight:null,rest:90,theme:'light',three:true},
+  user:{name:'',weight:null,taille:null,poidsObjectif:null,rest:90,theme:'light',three:true},
   program:'masse',
   plan:{days:[0,2,4]},        // jours d'entraînement (0=Lun ... 6=Dim)
   trainTime:'18:00',           // heure d'entraînement (pour les compléments)
   supps:{whey:false,creatine:false},
   tests:{},
   history:[],
+  mesures:[],
   active:null
 };
 let S = load();
@@ -587,7 +663,7 @@ function go(name){
   $('#s-'+name).classList.add('active');
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.go===name));
   window.scrollTo(0,0);
-  ({accueil:renderAccueil,programme:renderProgramme,seances:renderSeances,stats:renderStats,profil:renderProfil}[name]||(()=>{}))();
+  ({accueil:renderAccueil,programme:renderProgramme,seances:renderSeances,stats:renderStats,corps:renderCorps,profil:renderProfil}[name]||(()=>{}))();
 }
 $('#nav').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(b.dataset.go);});
 
@@ -624,6 +700,7 @@ function renderAccueil(){
     show3D('#hero-3d',(day.exos.find(e=>e.type==='muscu')||day.exos[0]).icon,'#ffffff');
   }
   renderOnboard();
+  renderHomeBody();
   renderHomeSupp();
   $('#st-week').textContent=weekCount();
   $('#st-streak').textContent=streak();
@@ -651,6 +728,23 @@ function renderOnboard(){
 function renderWeekStrip(){
   const wp=weekPlan(),ti=todayIdx(),col=prog().color;
   $('#weekstrip').innerHTML=WEEKDAYS.map((d,i)=>`<div class="wd ${i===ti?'today':''}"><div class="wl">${d}</div><div class="wi" style="${wp[i].rest?'':`background:${col}`}"></div></div>`).join('');
+}
+function renderHomeBody(){
+  const box=$('#home-body'), L=mesuresTriees(), d=L[L.length-1];
+  if(!d){box.style.display='none';return;}
+  box.style.display='';
+  // écart avec la mesure la plus proche d'il y a une semaine
+  const cible=new Date(d.date); cible.setDate(cible.getDate()-7);
+  const ref=L.filter(m=>m.date<d.date).sort((a,b)=>Math.abs(new Date(a.date)-cible)-Math.abs(new Date(b.date)-cible))[0];
+  const dv=ref?d.poids-ref.poids:null;
+  const bon=sensPoids(), cls=dv==null?'flat':(!bon?'flat':((dv>0)===(bon==='haut')?'up':'down'));
+  box.innerHTML=`<div class="card" style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="go('corps')">
+      <span style="font-size:24px;">⚖️</span>
+      <div class="grow"><div class="t" style="font-weight:800;font-size:15px;">${fmtN(d.poids,1)} kg</div>
+        <div class="s" style="font-size:12px;color:var(--muted);">Pesée du ${fmtDate(d.date)}${d.mg!=null?' · '+fmtN(d.mg,1)+' % MG':''}</div></div>
+      ${dv!=null?`<div class="delta ${cls}" style="font-size:13px;white-space:nowrap;">${dv>0?'+':''}${fmtN(dv,1)} kg</div>`:''}
+      <span class="chev" style="color:var(--muted2);font-size:18px;font-weight:700;">›</span>
+    </div>`;
 }
 function renderHomeSupp(){
   const box=$('#home-supp'),te=weekPlan()[todayIdx()];
@@ -823,7 +917,17 @@ function renderStats(){
   $('#stx-vol').textContent=(S.history.reduce((a,b)=>a+(b.volume||0),0)/1000).toFixed(1);
   $('#stx-cardio').textContent=S.history.reduce((a,b)=>a+(b.cardioMin||0),0);
   $('#stx-seances').textContent=S.history.length;
-  drawVolume();drawDonut();renderPR();
+  drawVolume();drawDonut();renderPR();renderStatsBody();
+}
+function renderStatsBody(){
+  const L=mesuresTriees(), d=L[L.length-1], box=$('#stats-body');
+  if(!d){box.innerHTML='<div class="empty">Importe tes pesées MovingLife pour suivre ton poids ici ⚖️</div>';return;}
+  const dep=L[0], dv=L.length>1?d.poids-dep.poids:null;
+  box.innerHTML=`<div class="row" onclick="go('corps')" style="cursor:pointer;">
+      <span class="dot" style="background:var(--blue)"></span>
+      <div class="grow"><div class="t">${fmtN(d.poids,1)} kg${d.mg!=null?' · '+fmtN(d.mg,1)+' % MG':''}</div>
+        <div class="s">${L.length} pesée${L.length>1?'s':''}${dv!=null?` · ${dv>0?'+':''}${fmtN(dv,1)} kg depuis le ${fmtDate(dep.date)}`:''}</div></div>
+      <span class="badge todo">Voir ›</span></div>`;
 }
 function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
 function drawVolume(){
@@ -859,6 +963,7 @@ function renderPR(){
 /* ============ PROFIL ============ */
 function renderProfil(){
   $('#p-name').value=S.user.name;$('#p-weight').value=S.user.weight??'';$('#p-goal').value=S.program;$('#p-rest').value=S.user.rest;
+  $('#p-taille').value=S.user.taille??'';$('#p-objectif').value=S.user.poidsObjectif??'';
   $('#p-3d').textContent=S.user.three?'Activée':'Désactivée';
   const box=$('#force-test');
   box.innerHTML=LIFTS.map(l=>{const t=S.tests[l.key]||{};return `
@@ -869,14 +974,299 @@ function renderProfil(){
     </div>`;}).join('')+`<button class="btn btn-blue btn-sm" id="t-save">Calculer mes poids prévus</button>`;
   $('#t-save').onclick=()=>{LIFTS.forEach(l=>{const c=parseFloat($('#t-'+l.key+'-c').value),r=parseInt($('#t-'+l.key+'-r').value);if(c>0&&r>0)S.tests[l.key]={charge:c,reps:r,rm:estimate1RM(c,r)};});save();renderProfil();toast('Test enregistré · poids prévus mis à jour 💪');};
 }
-$('#p-save').onclick=()=>{S.user.name=$('#p-name').value.trim();S.user.weight=parseFloat($('#p-weight').value)||null;S.program=$('#p-goal').value;S.user.rest=parseInt($('#p-rest').value)||90;save();toast('Profil enregistré ✓');};
+$('#p-save').onclick=()=>{S.user.name=$('#p-name').value.trim();S.user.weight=parseFloat($('#p-weight').value)||null;S.program=$('#p-goal').value;S.user.rest=parseInt($('#p-rest').value)||90;
+  S.user.taille=parseFloat($('#p-taille').value)||null;S.user.poidsObjectif=parseFloat($('#p-objectif').value)||null;
+  save();toast('Profil enregistré ✓');};
 $('#p-theme').onclick=toggleTheme;
 $('#p-3d').onclick=()=>{S.user.three=!S.user.three;save();set3D(S.user.three);renderProfil();toast(S.user.three?'Démo 3D activée 🧍':'Démo 3D désactivée');};
 $('#p-reset').onclick=()=>{if(confirm('Effacer TOUTES les données ?')){localStorage.removeItem('delrobi');S=structuredClone(DEFAULT);applyTheme();set3D(true);go('accueil');toast('Données réinitialisées');}};
 
+/* ============ COMPOSITION CORPORELLE (MovingLife → Santé / Health Connect) ============
+   L'app de la balance n'a pas d'API : on récupère les pesées via le presse-papiers,
+   un fichier exporté, l'URL (#mesures=…) ou un pont natif éventuel (window.DelrobiHealth). */
+const METRIQUES=[
+  {k:'imc',    lab:'IMC',               u:'',    d:1},
+  {k:'mg',     lab:'Masse grasse',      u:'%',   d:1, bon:'bas'},
+  {k:'mm',     lab:'Masse musculaire',  u:'kg',  d:1, bon:'haut'},
+  {k:'eau',    lab:'Eau',               u:'%',   d:1, bon:'haut'},
+  {k:'os',     lab:'Masse osseuse',     u:'kg',  d:2},
+  {k:'visc',   lab:'Graisse viscérale', u:'',    d:0, bon:'bas'},
+  {k:'mb',     lab:'Métabolisme',       u:'kcal',d:0, bon:'haut'},
+  {k:'ageMeta',lab:'Âge métabolique',   u:'ans', d:0, bon:'bas'},
+];
+const BORNES={poids:[20,400],mg:[1,80],mm:[5,120],eau:[20,80],os:[.5,10],visc:[1,60],mb:[500,5000],ageMeta:[10,99],imc:[8,80]};
+
+const norm=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+const ALIAS={
+  date:['date','jour','datetime','datedemesure','startdate','start','heure','time','day','datum','mesurele'],
+  poids:['poids','poidscorporel','poidsdecorps','weight','bodymass','bodyweight','masse','kg'],
+  mg:['massegrasse','graissecorporelle','tauxdegraisse','pourcentagedegraisse','graisse','bodyfatpercentage','bodyfat','fatpercent','fat'],
+  mm:['massemusculaire','musclemass','leanbodymass','massemaigre','muscles','muscle','lean'],
+  eau:['eaucorporelle','totalbodywater','bodywater','hydratation','water','eau'],
+  os:['masseosseuse','bonemass','massedesos','bone','os'],
+  visc:['graisseviscerale','visceralfat','indiceviscere','viscerale','visceral'],
+  mb:['metabolismedebase','metabolismebasal','basalmetabolicrate','metabolisme','bmrkcal','bmr'],
+  ageMeta:['agemetabolique','metabolicage','agecorporel','bodyage'],
+  imc:['indicedemassecorporelle','bodymassindex','imc','bmi'],
+};
+const CLES=['date','poids','mg','mm','eau','os','visc','mb','ageMeta','imc'];
+function cleDe(h){                                    // reconnaît un intitulé de colonne / de champ
+  const n=norm(h); if(!n)return null;
+  const interne=CLES.find(c=>norm(c)===n); if(interne)return interne;   // notre propre format
+  for(const k in ALIAS)if(ALIAS[k].includes(n))return k;
+  let best=null,len=0;
+  for(const k in ALIAS)for(const a of ALIAS[k])if(n.startsWith(a)&&a.length>len){best=k;len=a.length;}
+  return best;
+}
+function nombreDe(v){
+  if(typeof v==='number')return isFinite(v)?v:null;
+  const s=String(v??'').replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,'');
+  const n=parseFloat(s); return isFinite(n)?n:null;
+}
+const MOIS_FR=['janvier','fevrier','mars','avril','mai','juin','juillet','aout','septembre','octobre','novembre','decembre'];
+function dateDe(v){
+  const s=String(v??'').trim(); if(!s)return todayStr();
+  let m=s.match(/(\d{4})-(\d{2})-(\d{2})/);            if(m)return `${m[1]}-${m[2]}-${m[3]}`;
+  m=s.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})\b/);
+  if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  m=s.match(/\b(\d{1,2})\s+([a-zéûôA-ZÉÛÔ]+)\.?\s+(\d{4})\b/);   // « 3 août 2026 »
+  if(m){const i=MOIS_FR.findIndex(x=>x.startsWith(norm(m[2]).slice(0,4)));
+    if(i>=0)return `${m[3]}-${String(i+1).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;}
+  const d=new Date(s); return isNaN(d)?todayStr():d.toISOString().slice(0,10);
+}
+function propre(m){                                   // ne garde que des valeurs plausibles
+  const o={date:m.date||todayStr()};
+  for(const k in BORNES){const v=nombreDe(m[k]);if(v!=null&&v>=BORNES[k][0]&&v<=BORNES[k][1])o[k]=Math.round(v*100)/100;}
+  return o.poids!=null||o.mg!=null||o.mm!=null?o:null;
+}
+
+/* ---- analyse d'un collage / fichier ---- */
+function parseJSON(txt){
+  let j; try{j=JSON.parse(txt);}catch(e){return [];}
+  const arr=Array.isArray(j)?j:(j.mesures||j.records||j.data||j.samples||j.results||[]);
+  return (Array.isArray(arr)?arr:[arr]).map(o=>{
+    const m={}; for(const key in o){const c=cleDe(key);if(!c)continue;
+      if(c==='date')m.date=dateDe(o[key]); else m[c]=nombreDe(o[key]);}
+    return m;});
+}
+function parseCSV(txt){
+  const lignes=txt.split(/\r?\n/).filter(l=>l.trim());
+  if(lignes.length<2)return [];
+  const sep=[';','\t',','].map(s=>({s,n:lignes[0].split(s).length})).sort((a,b)=>b.n-a.n)[0];
+  if(sep.n<2)return [];
+  const tete=lignes[0].split(sep.s).map(cleDe);
+  const entete=tete.filter(Boolean).length>=2;
+  const cols=entete?tete:['date','poids','mg','mm','eau','os','visc','mb'];
+  const out=[];
+  for(const l of lignes.slice(entete?1:0)){
+    const c=l.split(sep.s),m={};
+    cols.forEach((col,i)=>{if(!col||c[i]==null)return;
+      if(col==='date')m.date=dateDe(c[i]); else m[col]=nombreDe(c[i]);});
+    if(!entete&&!(m.poids>=BORNES.poids[0]&&m.poids<=BORNES.poids[1]))continue;   // colonnes devinées : on exige un poids crédible
+    out.push(m);
+  }
+  return out;
+}
+function parseSante(txt){                              // export.xml d'Apple Santé
+  const TYPES={bodymass:'poids',bodyfatpercentage:'mg',leanbodymass:'mm',bodymassindex:'imc'};
+  const par={};
+  for(const tag of txt.match(/<Record\b[^>]*>/g)||[]){
+    const at=n=>{const m=tag.match(new RegExp('\\b'+n+'="([^"]*)"'));return m?m[1]:'';};
+    const t=TYPES[norm(at('type')).replace('hkquantitytypeidentifier','')];
+    if(!t)continue;
+    let v=nombreDe(at('value')); if(v==null)continue;
+    const u=norm(at('unit'));
+    if(t==='poids'&&(u==='lb'||u==='lbs'))v*=.45359237;
+    if(t==='mm'&&(u==='lb'||u==='lbs'))v*=.45359237;
+    if(t==='mg'&&v<=1)v*=100;                          // Santé stocke les % en fraction
+    const d=dateDe(at('startDate')||at('creationDate'));
+    (par[d]=par[d]||{date:d})[t]=v;
+  }
+  return Object.values(par);
+}
+function parseTexte(txt){                              // « 3 août 2026 — 78,4 kg · 18,2 % »
+  const out=[];
+  for(const l of txt.split(/\r?\n/)){
+    if(!l.trim())continue;
+    const kg=l.match(/(\d+[.,]?\d*)\s*(kg|kilos?)\b/i), pc=l.match(/(\d+[.,]?\d*)\s*%/);
+    const nb=l.match(/(\d+[.,]\d+)/);
+    const poids=kg?nombreDe(kg[1]):(pc?null:(nb?nombreDe(nb[1]):null));
+    if(poids==null)continue;
+    const m={date:dateDe(l),poids};
+    if(pc)m.mg=nombreDe(pc[1]);
+    out.push(m);
+  }
+  return out;
+}
+function analyser(txt){                                 // on essaie chaque format, on garde le premier qui donne une vraie mesure
+  const t=String(txt||'').trim(); if(!t)return [];
+  if(t.startsWith('PK'))return 'zip';
+  const essais=[];
+  if(/^[\[{]/.test(t))essais.push(parseJSON(t));
+  if(t.includes('HKQuantityTypeIdentifier'))essais.push(parseSante(t));
+  essais.push(parseCSV(t),parseTexte(t));
+  for(const e of essais)if((e||[]).some(m=>propre(m)?.poids!=null))return e;
+  for(const e of essais)if((e||[]).some(m=>propre(m)))return e;
+  return [];
+}
+function importerMesures(list,src){
+  if(list==='zip'){toast('Décompresse l\'archive et choisis export.xml');return 0;}
+  const par={}; S.mesures.forEach(m=>par[m.date]=m);
+  let n=0;
+  (list||[]).forEach(raw=>{
+    const m=propre(raw); if(!m)return;
+    par[m.date]={...(par[m.date]||{}),...m,src:src||'Import'}; n++;
+  });
+  if(!n){toast('Aucune mesure reconnue 🤔');return 0;}
+  S.mesures=Object.values(par).sort((a,b)=>a.date<b.date?-1:1);
+  const d=derniereMesure(); if(d&&d.poids)S.user.weight=d.poids;
+  save(); toast(`${n} mesure${n>1?'s':''} importée${n>1?'s':''} ✓`);
+  return n;
+}
+const mesuresTriees=()=>[...(S.mesures||[])].sort((a,b)=>a.date<b.date?-1:1);
+const derniereMesure=()=>mesuresTriees().slice(-1)[0]||null;
+function imcDe(m){
+  if(!m)return null;
+  if(m.imc)return m.imc;
+  const t=S.user.taille; return (t&&m.poids)?m.poids/Math.pow(t/100,2):null;
+}
+const fmtN=(v,d)=>v==null?'—':v.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+/* ---- écran Corps ---- */
+function deltaHTML(cur,prev,d,bon){
+  if(cur==null||prev==null)return '<div class="delta flat">—</div>';
+  const dv=cur-prev, s=(dv>0?'+':'')+fmtN(dv,d);
+  if(Math.abs(dv)<Math.pow(10,-d)/2)return '<div class="delta flat">stable</div>';
+  const cls=!bon?'flat':((dv>0)===(bon==='haut')?'up':'down');
+  return `<div class="delta ${cls}">${s}</div>`;
+}
+function sensPoids(){return S.program==='perte'?'bas':(S.program==='masse'?'haut':null);}
+function renderCorps(){
+  const L=mesuresTriees(), d=L[L.length-1], p=L[L.length-2];
+  const top=$('#mes-top');
+  if(!d){
+    top.innerHTML='<div class="card"><div class="empty">Pas encore de pesée.<br>Importe tes mesures MovingLife ou ajoute-les à la main ⚖️</div></div>';
+  }else{
+    const obj=S.user.poidsObjectif, dep=L[0]?.poids;
+    let goal='';
+    if(obj&&dep&&Math.abs(dep-obj)>.1){
+      const pr=Math.max(0,Math.min(100,(dep-d.poids)/(dep-obj)*100));
+      goal=`<div class="goal-wrap"><div class="goal-bar"><i style="width:${pr}%"></i></div>
+        <span style="font-size:12px;font-weight:700;">${Math.round(pr)}% · objectif ${fmtN(obj,1)} kg</span></div>`;
+    }
+    top.innerHTML=`<div class="mes-hero">
+        <div class="l">Dernière pesée · ${fmtDate(d.date)}</div>
+        <div class="big">${fmtN(d.poids,1)}<small>kg</small></div>
+        <div class="sub">${p?`${d.poids-p.poids>0?'+':''}${fmtN(d.poids-p.poids,1)} kg depuis le ${fmtDate(p.date)}`:'Première mesure enregistrée'}</div>
+        ${goal}
+      </div>
+      <div class="mes-grid">${METRIQUES.map(m=>{
+        const val=x=>m.k==='imc'?imcDe(x):(x?x[m.k]:null);
+        const cur=val(d), prev=val([...L].slice(0,-1).reverse().find(x=>val(x)!=null));
+        if(cur==null)return '';
+        return `<div class="mtile"><div class="k">${m.lab}</div>
+          <div class="v">${fmtN(cur,m.d)}<span>${m.u}</span></div>${deltaHTML(cur,prev,m.d,m.bon)}</div>`;
+      }).join('')}</div>
+      <div style="margin:-4px 2px 4px;"><span class="src-pill">${d.src||'Manuel'}</span></div>`;
+  }
+  drawSerie('chart-poids',L.map(m=>({x:m.date,y:m.poids})),cssv('--blue'),'kg','Poids (kg)');
+  const mg=L.filter(m=>m.mg!=null);
+  $('#card-mg').style.display=mg.length?'':'none';
+  if(mg.length)drawSerie('chart-mg',mg.map(m=>({x:m.date,y:m.mg})),'#ec4899','%','Masse grasse (%)');
+
+  $('#mes-form').innerHTML=`
+    <div class="two"><div class="field"><label>Date</label><input id="f-date" type="date" value="${todayStr()}"></div>
+    <div class="field"><label>Poids (kg)</label><input id="f-poids" type="number" step="0.1" inputmode="decimal" placeholder="${d?fmtN(d.poids,1):'78,4'}"></div></div>
+    <div class="two"><div class="field"><label>Masse grasse (%)</label><input id="f-mg" type="number" step="0.1" inputmode="decimal"></div>
+    <div class="field"><label>Masse musculaire (kg)</label><input id="f-mm" type="number" step="0.1" inputmode="decimal"></div></div>
+    <div class="two"><div class="field"><label>Eau (%)</label><input id="f-eau" type="number" step="0.1" inputmode="decimal"></div>
+    <div class="field"><label>Graisse viscérale</label><input id="f-visc" type="number" step="1" inputmode="numeric"></div></div>
+    <button class="btn btn-blue btn-sm" id="f-save">Enregistrer la mesure</button>`;
+  $('#f-save').onclick=()=>{
+    const m={date:$('#f-date').value||todayStr()};
+    ['poids','mg','mm','eau','visc'].forEach(k=>{const v=nombreDe($('#f-'+k).value);if(v!=null)m[k]=v;});
+    if(nombreDe($('#f-poids').value)==null){toast('Indique au moins ton poids 💡');return;}
+    importerMesures([m],'Manuel'); renderCorps();
+  };
+
+  const box=$('#mes-list');
+  box.innerHTML=L.length?[...L].reverse().map(m=>`<div class="mes-row">
+      <span class="d">${fmtDate(m.date)}</span>
+      <span class="w">${fmtN(m.poids,1)} kg</span>
+      <span class="s" style="font-size:12px;color:var(--muted);">${m.mg!=null?fmtN(m.mg,1)+' % MG':''}${m.mg!=null&&m.mm!=null?' · ':''}${m.mm!=null?fmtN(m.mm,1)+' kg muscle':''}</span>
+      <button class="x" onclick="supprimerMesure('${m.date}')" title="Supprimer">✕</button>
+    </div>`).join('')
+    :'<div class="empty">Ton historique de pesées apparaîtra ici ⚖️</div>';
+  $('#mes-sync').style.display=(window.DelrobiHealth&&window.DelrobiHealth.read)?'':'none';
+}
+function supprimerMesure(date){
+  S.mesures=S.mesures.filter(m=>m.date!==date);
+  const d=derniereMesure(); if(d&&d.poids)S.user.weight=d.poids;
+  save(); renderCorps(); toast('Mesure supprimée');
+}
+function drawSerie(id,pts,color,unite,titre){
+  const c=$('#'+id); if(!c)return;
+  const ctx=c.getContext('2d'),W=c.width,H=c.height,pad=34;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=cssv('--muted');ctx.font='700 11px Inter';ctx.textAlign='left';ctx.fillText(titre,6,14);
+  const P=pts.filter(p=>p.y!=null).slice(-14);
+  if(!P.length){ctx.font='13px Inter';ctx.textAlign='center';ctx.fillText('Pas encore de données',W/2,H/2+6);return;}
+  const vals=P.map(p=>p.y),mn=Math.min(...vals),mx=Math.max(...vals),amp=(mx-mn)||1;
+  const lo=mn-amp*.4,hi=mx+amp*.4,n=P.length;
+  const X=i=>pad+(W-pad*1.5)*(n===1?.5:i/(n-1)), Y=v=>H-24-(H-52)*((v-lo)/(hi-lo));
+  ctx.strokeStyle=cssv('--border');ctx.lineWidth=1;
+  for(let g=0;g<=2;g++){const y=22+((H-52)/2)*g;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad*.5,y);ctx.stroke();}
+  if(n>1){
+    const gr=ctx.createLinearGradient(0,0,0,H);
+    gr.addColorStop(0,color+'55');gr.addColorStop(1,color+'00');
+    ctx.beginPath();ctx.moveTo(X(0),Y(vals[0]));vals.forEach((v,i)=>ctx.lineTo(X(i),Y(v)));
+    ctx.lineTo(X(n-1),H-24);ctx.lineTo(X(0),H-24);ctx.closePath();ctx.fillStyle=gr;ctx.fill();
+  }
+  ctx.beginPath();ctx.moveTo(X(0),Y(vals[0]));vals.forEach((v,i)=>ctx.lineTo(X(i),Y(v)));
+  ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
+  vals.forEach((v,i)=>{ctx.beginPath();ctx.arc(X(i),Y(v),3.5,0,7);ctx.fillStyle=color;ctx.fill();
+    ctx.strokeStyle=cssv('--card');ctx.lineWidth=2;ctx.stroke();});
+  ctx.fillStyle=cssv('--text');ctx.font='700 11px Inter';ctx.textAlign='right';
+  ctx.fillText(fmtN(vals[n-1],1)+' '+unite,W-6,Y(vals[n-1])-9);
+  ctx.fillStyle=cssv('--muted');ctx.font='600 10px Inter';ctx.textAlign='center';
+  ctx.fillText(fmtDate(P[0].x),X(0)+6,H-7);
+  if(n>1)ctx.fillText(fmtDate(P[n-1].x),X(n-1)-6,H-7);
+}
+
+/* ---- entrées de données ---- */
+$('#imp-go').onclick=()=>{const t=$('#imp-text').value;if(!t.trim()){toast('Colle d\'abord tes mesures 💡');return;}
+  if(importerMesures(analyser(t),'Santé')){$('#imp-text').value='';renderCorps();}};
+$('#imp-pick').onclick=()=>$('#imp-file').click();
+$('#imp-file').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{if(importerMesures(analyser(r.result),'Fichier'))renderCorps();};
+  r.onerror=()=>toast('Lecture du fichier impossible');
+  r.readAsText(f); e.target.value='';
+};
+$('#mes-sync').onclick=async()=>{
+  try{
+    const b=window.DelrobiHealth;
+    if(b.request)await b.request();
+    const data=await b.read((derniereMesure()||{}).date||'');
+    if(importerMesures(analyser(typeof data==='string'?data:JSON.stringify(data)),'Santé'))renderCorps();
+  }catch(e){toast('Synchronisation impossible');}
+};
+// point d'entrée pour une enveloppe native (Health Connect / Apple Santé)
+window.delrobiImport=txt=>{const n=importerMesures(analyser(String(txt)),'Santé');
+  if($('#s-corps').classList.contains('active'))renderCorps(); return n;};
+// … et pour un raccourci qui ouvre l'app avec les données dans l'adresse
+function importDepuisURL(){
+  const m=(location.hash+location.search).match(/[#?&]mesures=([^&]+)/); if(!m)return;
+  let t=decodeURIComponent(m[1]);
+  if(!/^[\[{]/.test(t.trim())){try{t=atob(t);}catch(e){}}
+  importerMesures(analyser(t),'Santé');
+  try{history.replaceState(null,'',location.pathname);}catch(e){}
+}
+
 /* ============ THÈME ============ */
 function applyTheme(){document.documentElement.classList.toggle('dark',S.user.theme==='dark');$('#themeBtn').textContent=S.user.theme==='dark'?'☀️':'🌙';}
-function toggleTheme(){S.user.theme=S.user.theme==='dark'?'light':'dark';save();applyTheme();if(window.Coach3D)window.Coach3D.theme();if($('#s-stats').classList.contains('active'))renderStats();}
+function toggleTheme(){S.user.theme=S.user.theme==='dark'?'light':'dark';save();applyTheme();if(window.Coach3D)window.Coach3D.theme();if($('#s-stats').classList.contains('active'))renderStats();if($('#s-corps').classList.contains('active'))renderCorps();}
 function set3D(on){if(window.Coach3D)window.Coach3D.setEnabled(on);}
 $('#themeBtn').onclick=toggleTheme;
 
@@ -888,6 +1278,7 @@ window.addEventListener('coach3d-ready',()=>{
   else if($('#s-accueil').classList.contains('active'))renderAccueil();
 });
 applyTheme();
+importDepuisURL();
 if(S.active){renderSession();$$('.screen').forEach(s=>s.classList.remove('active'));$('#s-session').classList.add('active');$$('#nav button').forEach(b=>b.classList.remove('on'));}
 else renderAccueil();
 </script>
