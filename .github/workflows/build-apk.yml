@@ -3,6 +3,7 @@ name: Build Delrobi APK
 on:
   push:
     branches:
+      - main
       - claude/fitness-app-prompt-update-2f22s6
     paths:
       - 'app-muscu.html'
