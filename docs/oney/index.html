@@ -90,12 +90,21 @@ main{padding:14px 12px 0;display:flex;flex-direction:column;gap:12px}
 .panel{background:var(--surf);border:1px solid var(--line);border-radius:18px;
   padding:14px;box-shadow:var(--ombre)}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tete-champ{height:26px;display:flex;align-items:center;margin-bottom:7px}
 .champ label{
   display:flex;align-items:center;gap:5px;
   font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;
-  color:var(--muted);margin-bottom:7px;
+  color:var(--muted);
 }
 .champ label i{width:6px;height:6px;border-radius:2px;display:inline-block}
+.mini{display:flex;gap:3px;background:var(--surf2);border:1px solid var(--line);
+  border-radius:10px;padding:2px}
+.mini button{
+  border:0;background:transparent;border-radius:8px;cursor:pointer;font-family:inherit;
+  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--muted);padding:4px 9px;transition:.15s;
+}
+.mini button.on{background:var(--jaune);color:#0b0d12}
 .boite{
   position:relative;background:var(--surf2);border:1.5px solid var(--line);
   border-radius:14px;transition:.15s;
@@ -106,9 +115,11 @@ main{padding:14px 12px 0;display:flex;flex-direction:column;gap:12px}
   font-family:inherit;font-size:27px;font-weight:800;letter-spacing:-.6px;
   font-variant-numeric:tabular-nums;padding:12px 32px 12px 13px;
 }
+.boite.unite-mois input{padding-right:52px}
 .boite input::placeholder{color:var(--faint)}
 .boite .eur{position:absolute;right:12px;top:50%;transform:translateY(-50%);
   font-size:18px;font-weight:800;color:var(--faint);pointer-events:none}
+.boite.unite-mois .eur{font-size:13px}
 input[type=number]{-moz-appearance:textfield}
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .rapide{display:flex;gap:6px;margin-top:11px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
@@ -247,30 +258,28 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   <section class="panel">
     <div class="duo">
       <div class="champ">
-        <label><i style="background:#63b3ed"></i>Montant à financer</label>
+        <div class="tete-champ">
+          <label><i style="background:#63b3ed"></i>Montant à financer</label>
+        </div>
         <div class="boite">
           <input id="montant" type="number" inputmode="decimal" step="1" min="0" placeholder="0">
           <span class="eur">€</span>
         </div>
       </div>
       <div class="champ">
-        <label><i style="background:var(--jaune)"></i>Budget mensuel</label>
-        <div class="boite">
+        <div class="tete-champ">
+          <div class="mini" id="calcul">
+            <button class="on" data-calcul="budget" type="button">Budget</button>
+            <button data-calcul="duree" type="button">Durée</button>
+          </div>
+        </div>
+        <div class="boite" id="boite2">
           <input id="budget" type="number" inputmode="decimal" step="1" min="0" placeholder="0">
-          <span class="eur">€</span>
+          <span class="eur" id="unite">€</span>
         </div>
       </div>
     </div>
-    <div class="rapide" id="rapide">
-      <button type="button" data-b="20">20 €</button>
-      <button type="button" data-b="30">30 €</button>
-      <button type="button" data-b="40">40 €</button>
-      <button type="button" data-b="50">50 €</button>
-      <button type="button" data-b="60">60 €</button>
-      <button type="button" data-b="80">80 €</button>
-      <button type="button" data-b="100">100 €</button>
-      <button type="button" data-b="150">150 €</button>
-    </div>
+    <div class="rapide" id="rapide"></div>
   </section>
 
   <!-- OPTION ASSURANCE MOBILE (mode ES) -->
@@ -287,7 +296,7 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
     </div>
     <div class="ec-corps" id="ecCorps">
       <div class="champ">
-        <label>Prix du mobile (TTC)</label>
+        <div class="tete-champ"><label>Prix du mobile (TTC)</label></div>
         <div class="boite">
           <input id="prixMobile" type="number" inputmode="decimal" step="1" min="0" placeholder="0">
           <span class="eur">€</span>
@@ -348,8 +357,9 @@ function primeEC(prix){
 }
 
 /*
-  Amortissement Oney : la mensualité qui rembourse réellement le crédit
-  est le budget DIMINUÉ des primes mensuelles (ES + EC).
+  BUDGET IMPOSÉ — amortissement Oney.
+  La mensualité qui rembourse réellement le crédit est le budget DIMINUÉ
+  des primes mensuelles (ES + EC).
   Chaque mois : solde = solde * (1 + taux) - mensualité crédit.
 */
 function simuler(capital, mensualiteCredit){
@@ -369,15 +379,56 @@ function simuler(capital, mensualiteCredit){
   return {ok:false, motif:'trop_long'};
 }
 
+/*
+  DURÉE IMPOSÉE — annuité constante.
+  Mensualité de crédit qui solde exactement le capital en N mois :
+      m = C × i / (1 - (1 + i)^-N)
+  Les primes ES / EC viennent s'ajouter par-dessus : à durée fixée elles
+  n'engendrent aucun intérêt supplémentaire, elles gonflent la mensualité.
+*/
+function mensualitePourDuree(capital, mois){
+  const i = TAUX_MENSUEL;
+  return capital * i / (1 - Math.pow(1 + i, -mois));
+}
+
+/* Résultat unifié, quel que soit le sens du calcul */
+function resultat(capital, valeur, prime, ec, sens){
+  if (sens === 'duree'){
+    const N = Math.round(valeur);
+    if (!(capital > 0)) return {ok:false, motif:'vide'};
+    if (!(N > 0))       return {ok:false, motif:'duree'};
+    if (N > 600)        return {ok:false, motif:'trop_long'};
+    const mc = mensualitePourDuree(capital, N);
+    const interets = mc * N - capital;
+    return {ok:true, sens:'duree', echeances:N, moisPrime:N,
+            mensCredit:mc, mensualite: mc + prime + ec, interets,
+            total:(mc + prime + ec) * N, coutMois: interets / N};
+  }
+  const mc = valeur - prime - ec;
+  const r = simuler(capital, mc);
+  if (!r.ok) return r;
+  return {ok:true, sens:'budget', echeances: r.mois + (r.derniere >= 0.01 ? 1 : 0),
+          moisPrime:r.mois, mois:r.mois, derniere:r.derniere,
+          mensCredit:mc, mensualite:valeur, interets:r.interets,
+          total: r.mois * valeur + r.derniere,
+          coutMois: r.interets / (r.mois + r.derniere / mc)};
+}
+
 /* ===================== OUTILS ===================== */
 const $ = s => document.querySelector(s);
 const eMontant = $('#montant'), eBudget = $('#budget'), ePrix = $('#prixMobile'),
       eEcOn = $('#ecOn'), eEcCorps = $('#ecCorps'), eTarifs = $('#tarifs'),
       eRes = $('#resultats'), eAlerte = $('#alerte'), eModes = $('#modes'),
-      eCarteEC = $('#carteEC'), eRapide = $('#rapide'), eTheme = $('#theme');
+      eCarteEC = $('#carteEC'), eRapide = $('#rapide'), eTheme = $('#theme'),
+      eCalcul = $('#calcul'), eUnite = $('#unite'), eBoite2 = $('#boite2');
 
-let ecManuel = null;   // prime EC forcée par une pastille (sinon déduite du prix)
-let mode = 'es';       // 'es' = garanties ElectroSûr | 'ec' = assurance mobile
+let ecManuel = null;      // prime EC forcée par une pastille (sinon déduite du prix)
+let mode = 'es';          // 'es' = garanties ElectroSûr | 'ec' = assurance mobile
+let calcul = 'budget';    // 'budget' = durée calculée | 'duree' = mensualité calculée
+let vBudget = '', vDuree = '';   // les deux saisies du 2e champ, mémorisées séparément
+
+const BUDGETS = [20, 30, 40, 50, 60, 80, 100, 150];
+const DUREES  = [6, 10, 12, 15, 18, 20, 24, 30, 36, 48];
 
 const num  = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : 0; };
 const eur  = v => v.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
@@ -389,10 +440,23 @@ function primeECActive(){
   return ecManuel !== null ? ecManuel : primeEC(num(ePrix.value));
 }
 
+/* Unité, placeholder et pastilles rapides du 2e champ */
+function majChamp2(){
+  const duree = calcul === 'duree';
+  eUnite.textContent = duree ? 'mois' : '€';
+  eBoite2.classList.toggle('unite-mois', duree);
+  eBudget.placeholder = duree ? '12' : '0';
+  eCalcul.querySelectorAll('button').forEach(b =>
+    b.classList.toggle('on', b.dataset.calcul === calcul));
+  eRapide.innerHTML = (duree ? DUREES : BUDGETS)
+    .map(v => '<button type="button" data-v="' + v + '">' + v + (duree ? ' mois' : ' €') + '</button>')
+    .join('');
+}
+
 /* ===================== AFFICHAGE ===================== */
 function calculer(){
   const capital = num(eMontant.value);
-  const budget  = num(eBudget.value);
+  const valeur  = num(eBudget.value);
   // en mode EC, les cartes SONT les tarifs d'assurance : pas de prime additionnelle
   const ec = mode === 'es' ? primeECActive() : 0;
 
@@ -403,15 +467,18 @@ function calculer(){
   eTarifs.querySelectorAll('.tarif').forEach(t =>
     t.classList.toggle('on', eEcOn.checked && +t.dataset.p === tarifActif));
   eRapide.querySelectorAll('button').forEach(b =>
-    b.classList.toggle('on', +b.dataset.b === budget));
+    b.classList.toggle('on', +b.dataset.v === valeur));
 
+  if (calcul === 'budget') vBudget = eBudget.value; else vDuree = eBudget.value;
   sauver();
 
-  if (!(capital > 0) || !(budget > 0)){
+  if (!(capital > 0) || !(valeur > 0)){
     eAlerte.innerHTML = '';
     eRes.innerHTML = '<div class="panel" style="text-align:center;color:var(--muted);' +
       'font-size:13px;padding:26px 16px">Saisis le <b style="color:#63b3ed">montant à financer</b>' +
-      ' et le <b style="color:var(--jaune)">budget mensuel</b>.</div>';
+      ' et ' + (calcul === 'duree'
+        ? 'la <b style="color:var(--jaune)">durée souhaitée</b>.'
+        : 'le <b style="color:var(--jaune)">budget mensuel</b>.') + '</div>';
     return;
   }
 
@@ -419,25 +486,30 @@ function calculer(){
   const conseille = mode === 'ec' ? primeEC(capital) : null;
 
   eAlerte.innerHTML =
-    mode === 'ec'
-      ? '<div class="info">Mobile à ' + eur0(capital) + ' → tarif conseillé ' +
-        '<b style="color:var(--jaune)">EC ' + eur0(primeEC(capital)) + '/mois</b>.</div>'
-      : (ec > 0
-        ? '<div class="info">Assurance mobile <b style="color:var(--jaune)">EC ' + eur0(ec) +
-          '/mois</b> incluse dans le budget → il reste <b>' + eur0(budget - ec) +
-          '/mois</b> pour le crédit et la garantie ES.</div>'
-        : '');
+    calcul === 'duree'
+      ? '<div class="info">Durée imposée : la mensualité est calculée pour solder le crédit ' +
+        'en <b>' + Math.round(valeur) + ' mois</b>. À durée égale, une garantie n\'ajoute ' +
+        '<b>aucun intérêt</b> — seulement sa prime sur la mensualité.</div>'
+      : (mode === 'ec'
+        ? '<div class="info">Mobile à ' + eur0(capital) + ' → tarif conseillé ' +
+          '<b style="color:var(--jaune)">EC ' + eur0(primeEC(capital)) + '/mois</b>.</div>'
+        : (ec > 0
+          ? '<div class="info">Assurance mobile <b style="color:var(--jaune)">EC ' + eur0(ec) +
+            '/mois</b> incluse dans le budget → il reste <b>' + eur0(valeur - ec) +
+            '/mois</b> pour le crédit et la garantie ES.</div>'
+          : ''));
 
-  // résultats + échelle commune pour les jauges de durée
-  const calculs = liste.map(g => ({g, r: simuler(capital, budget - g.prime - ec)}));
-  const maxMois = Math.max(1, ...calculs.filter(c => c.r.ok).map(c => c.r.mois + 1));
+  // résultats + échelle commune pour les jauges
+  const calculs = liste.map(g => ({g, r: resultat(capital, valeur, g.prime, ec, calcul)}));
+  const jaugeVal = r => calcul === 'duree' ? r.mensualite : r.echeances;
+  const maxJauge = Math.max(1, ...calculs.filter(c => c.r.ok).map(c => jaugeVal(c.r)));
   const base = calculs[0].r;
 
   eRes.innerHTML = calculs.map(c =>
-    carte(c.g, c.r, budget, ec, maxMois, base, c.g.prime === conseille)).join('');
+    carte(c.g, c.r, valeur, ec, maxJauge, base, c.g.prime === conseille)).join('');
 }
 
-function carte(g, r, budget, ec, maxMois, base, conseille){
+function carte(g, r, valeur, ec, maxJauge, base, conseille){
   const tete =
     '<div class="tete">' +
       '<div><div class="nom"><span class="pastille"></span>' + g.nom +
@@ -450,48 +522,58 @@ function carte(g, r, budget, ec, maxMois, base, conseille){
   if (!r.ok){
     const msg = {
       budget:   'Les primes (' + eur0(g.prime + ec) + '/mois) dépassent le budget.',
-      interets: 'Budget trop faible : il ne reste que ' + eur0(budget - g.prime - ec) +
+      interets: 'Budget trop faible : il ne reste que ' + eur0(valeur - g.prime - ec) +
                 '/mois pour le crédit, les intérêts ne sont pas couverts.',
       trop_long:'Durée supérieure à 600 mois.',
+      duree:    'Durée invalide.',
       vide:     'Montant invalide.'
     }[r.motif];
     return '<article class="opt ko" style="--opt:' + g.col + '">' + tete +
       '<div class="alerte-ko">' + msg + '</div></article>';
   }
 
-  const mensCredit = budget - g.prime - ec;
-  const totalPaye  = r.mois * budget + r.derniere;
-  const dureeReele = r.mois + r.derniere / mensCredit;   // durée en mois « fractionnaire »
-  const coutMois   = r.interets / dureeReele;
-  const echeances  = r.mois + (r.derniere >= 0.01 ? 1 : 0);
+  let grand;
+  if (r.sens === 'duree'){
+    const detail = [];
+    if (g.prime) detail.push(g.type + ' ' + eur0(g.prime));
+    if (ec)      detail.push('EC ' + eur0(ec));
+    grand = '<div class="grand"><b>' + r.echeances + '</b><span>× ' + eur(r.mensualite) + '</span></div>' +
+      (detail.length
+        ? '<div class="puis">dont crédit <b>' + eur(r.mensCredit) + '</b> + ' + detail.join(' + ') + '</div>'
+        : '');
+  } else if (r.mois > 0){
+    grand = '<div class="grand"><b>' + r.mois + '</b><span>× ' + eur0(valeur) + '</span></div>' +
+      (r.derniere >= 0.01 ? '<div class="puis">puis 1 mois à <b>' + eur(r.derniere) + '</b></div>' : '');
+  } else {
+    grand = '<div class="grand"><b>1</b><span>× ' + eur(r.derniere) + '</span></div>';
+  }
 
-  const grand = r.mois > 0
-    ? '<div class="grand"><b>' + r.mois + '</b><span>× ' + eur0(budget) + '</span></div>' +
-      (r.derniere >= 0.01 ? '<div class="puis">puis 1 mois à <b>' + eur(r.derniere) + '</b></div>' : '')
-    : '<div class="grand"><b>1</b><span>× ' + eur(r.derniere) + '</span></div>';
-
+  const valJauge = r.sens === 'duree' ? r.mensualite : r.echeances;
   const jauge =
     '<div class="jauge"><span class="piste"><i style="width:' +
-      Math.max(6, Math.round(echeances / maxMois * 100)) + '%"></i></span>' +
-      '<em>' + echeances + ' mois</em></div>';
+      Math.max(6, Math.round(valJauge / maxJauge * 100)) + '%"></i></span>' +
+      '<em>' + (r.sens === 'duree' ? eur(r.mensualite) + '/mois' : r.echeances + ' mois') + '</em></div>';
 
   const puces = [];
-  if (g.prime) puces.push('<em>' + g.type + ' ' + eur0(g.prime) + ' × ' + r.mois +
-    ' = <b>' + eur0(g.prime * r.mois) + '</b></em>');
-  if (ec) puces.push('<em>EC ' + eur0(ec) + ' × ' + r.mois + ' = <b>' + eur0(ec * r.mois) + '</b></em>');
+  if (g.prime) puces.push('<em>' + g.type + ' ' + eur0(g.prime) + ' × ' + r.moisPrime +
+    ' = <b>' + eur0(g.prime * r.moisPrime) + '</b></em>');
+  if (ec) puces.push('<em>EC ' + eur0(ec) + ' × ' + r.moisPrime +
+    ' = <b>' + eur0(ec * r.moisPrime) + '</b></em>');
   if (base.ok && g.prime){
-    const dm = echeances - (base.mois + (base.derniere >= 0.01 ? 1 : 0));
-    puces.push('<em>vs base : <b>' + (dm >= 0 ? '+' : '') + dm + ' mois</b> · <b>+' +
-      eur(r.interets - base.interets) + '</b></em>');
+    puces.push(r.sens === 'duree'
+      ? '<em>vs base : <b>+' + eur(r.mensualite - base.mensualite) + '/mois</b> · <b>+' +
+        eur(r.total - base.total) + '</b> au total</em>'
+      : '<em>vs base : <b>+' + (r.echeances - base.echeances) + ' mois</b> · <b>+' +
+        eur(r.interets - base.interets) + '</b></em>');
   }
-  if (echeances > 48) puces.push('<em style="color:#ff9ea1">⚠ au-delà du barème habituel</em>');
+  if (r.echeances > 48) puces.push('<em style="color:#ff9ea1">⚠ au-delà du barème habituel</em>');
 
   return '<article class="opt' + (conseille ? ' top' : '') + '" style="--opt:' + g.col + '">' +
     tete + grand + jauge +
     '<div class="kpi">' +
       '<div><span>Coût du crédit</span><b>' + eur(r.interets) + '</b></div>' +
-      '<div><span>Soit par mois</span><b>' + eur(coutMois) + '</b></div>' +
-      '<div><span>Total payé</span><b>' + eur(totalPaye) + '</b></div>' +
+      '<div><span>Soit par mois</span><b>' + eur(r.coutMois) + '</b></div>' +
+      '<div><span>Total payé</span><b>' + eur(r.total) + '</b></div>' +
     '</div>' +
     (puces.length ? '<div class="bas">' + puces.join('') + '</div>' : '') +
   '</article>';
@@ -499,21 +581,24 @@ function carte(g, r, budget, ec, maxMois, base, conseille){
 
 /* ===================== TEXTE À COPIER ===================== */
 function texteSimu(){
-  const capital = num(eMontant.value), budget = num(eBudget.value);
+  const capital = num(eMontant.value), valeur = num(eBudget.value);
   const ec = mode === 'es' ? primeECActive() : 0;
-  if (!(capital > 0 && budget > 0)) return 'Simulation vide.';
+  if (!(capital > 0 && valeur > 0)) return 'Simulation vide.';
   let t = 'SIMULATION ONEY — TAEG 20,50 % — ' +
           (mode === 'ec' ? 'ASSURANCE MOBILE EC' : 'GARANTIES ES') + '\n' +
           'Montant à financer : ' + eur0(capital) + '\n' +
-          'Budget mensuel : ' + eur0(budget) + '\n' +
+          (calcul === 'duree' ? 'Durée souhaitée : ' + Math.round(valeur) + ' mois\n'
+                              : 'Budget mensuel : ' + eur0(valeur) + '\n') +
           (ec ? 'Assurance mobile EC : ' + eur0(ec) + '/mois\n' : '') + '\n';
   (mode === 'ec' ? EC : ES).forEach(g => {
-    const r = simuler(capital, budget - g.prime - ec);
+    const r = resultat(capital, valeur, g.prime, ec, calcul);
     t += (g.prime ? g.nom + ' (+' + eur0(g.prime) + '/mois)' : g.nom) + '\n';
-    t += r.ok
-      ? '  ' + (r.mois ? r.mois + ' mois à ' + eur0(budget) + ' + ' : '') + '1 mois à ' + eur(r.derniere) +
-        '\n  Coût du crédit : ' + eur(r.interets) + '\n\n'
-      : '  Budget insuffisant\n\n';
+    if (!r.ok){ t += '  Budget insuffisant\n\n'; return; }
+    t += r.sens === 'duree'
+      ? '  ' + r.echeances + ' mois à ' + eur(r.mensualite) +
+        ' (dont crédit ' + eur(r.mensCredit) + ')\n  Coût du crédit : ' + eur(r.interets) + '\n\n'
+      : '  ' + (r.mois ? r.mois + ' mois à ' + eur0(valeur) + ' + ' : '') +
+        '1 mois à ' + eur(r.derniere) + '\n  Coût du crédit : ' + eur(r.interets) + '\n\n';
   });
   return t;
 }
@@ -531,10 +616,20 @@ eModes.addEventListener('click', e => {
   calculer();
 });
 
+eCalcul.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.dataset.calcul === calcul) return;
+  if (calcul === 'budget') vBudget = eBudget.value; else vDuree = eBudget.value;
+  calcul = b.dataset.calcul;
+  eBudget.value = calcul === 'budget' ? vBudget : vDuree;
+  majChamp2();
+  calculer();
+});
+
 eRapide.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) return;
-  eBudget.value = (+b.dataset.b === num(eBudget.value)) ? '' : b.dataset.b;
+  eBudget.value = (+b.dataset.v === num(eBudget.value)) ? '' : b.dataset.v;
   calculer();
 });
 
@@ -553,6 +648,7 @@ eTarifs.addEventListener('click', e => {
 
 $('#btnReset').addEventListener('click', () => {
   eMontant.value = ''; eBudget.value = ''; ePrix.value = '';
+  vBudget = ''; vDuree = '';
   eEcOn.checked = false; eEcCorps.classList.remove('on'); ecManuel = null;
   calculer(); eMontant.focus();
 });
@@ -586,8 +682,8 @@ eTheme.addEventListener('click', () => {
 function sauver(){
   try{
     localStorage.setItem('simuOney', JSON.stringify({
-      m:eMontant.value, b:eBudget.value, p:ePrix.value,
-      e:eEcOn.checked, c:ecManuel, mode:mode
+      m:eMontant.value, b:vBudget, d:vDuree, p:ePrix.value,
+      e:eEcOn.checked, c:ecManuel, mode:mode, calcul:calcul
     }));
   }catch(_){}
 }
@@ -595,12 +691,16 @@ function charger(){
   try{
     const d = JSON.parse(localStorage.getItem('simuOney') || '{}');
     if (d.m) eMontant.value = d.m;
-    if (d.b) eBudget.value = d.b;
     if (d.p) ePrix.value = d.p;
+    vBudget = d.b || '';
+    vDuree  = d.d || '';
     if (d.e){ eEcOn.checked = true; eEcCorps.classList.add('on'); }
     if (typeof d.c === 'number') ecManuel = d.c;
     if (d.mode === 'ec' || d.mode === 'es') mode = d.mode;
+    if (d.calcul === 'duree' || d.calcul === 'budget') calcul = d.calcul;
   }catch(_){}
+  eBudget.value = calcul === 'budget' ? vBudget : vDuree;
+  majChamp2();
   let t = null;
   try { t = localStorage.getItem('simuOneyTheme'); } catch(_){}
   appliquerTheme(t || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'clair' : 'sombre'));
