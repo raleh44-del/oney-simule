@@ -44,7 +44,7 @@ b,strong{font-weight:800}
 /* ===================== EN-TÊTE ===================== */
 header{
   position:sticky; top:0; z-index:30;
-  background:color-mix(in srgb,var(--bg-haut) 88%,transparent);
+  background:color-mix(in srgb,var(--bg-haut) 95%,transparent);
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
   padding:calc(9px + env(safe-area-inset-top,0px)) 14px 9px;
@@ -215,7 +215,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 /* ===================== BARRE DU BAS ===================== */
 .dock{
   position:fixed;left:0;right:0;bottom:0;z-index:30;
-  background:color-mix(in srgb,var(--bg-haut) 88%,transparent);
+  background:color-mix(in srgb,var(--bg-haut) 95%,transparent);
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
   border-top:1px solid var(--line);
   padding:10px 12px calc(10px + var(--safe-b));
@@ -231,6 +231,11 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
   flex:1.6;border:0;background:linear-gradient(145deg,var(--jaune),#ffb300);color:#0b0d12;
   box-shadow:0 6px 18px -8px rgba(255,196,0,.9);
 }
+/* Pendant la saisie, la barre du bas ne propose que « Valider » :
+   un appui ferme le clavier et amene directement aux resultats. */
+.dock .valider{display:none;font-size:15px}
+.dock.saisie .valider{display:block}
+.dock.saisie #btnCopie,.dock.saisie #btnReset{display:none}
 footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.55;text-align:center}
 </style>
 </head>
@@ -295,7 +300,7 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
           <label><i style="background:#63b3ed"></i>Montant à financer</label>
         </div>
         <div class="boite">
-          <input id="montant" type="number" inputmode="decimal" step="1" min="0" placeholder="0">
+          <input id="montant" type="number" inputmode="decimal" enterkeyhint="next" step="1" min="0" placeholder="0">
           <span class="eur">€</span>
         </div>
       </div>
@@ -307,7 +312,7 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
           </div>
         </div>
         <div class="boite" id="boite2">
-          <input id="budget" type="number" inputmode="decimal" step="1" min="0" placeholder="0">
+          <input id="budget" type="number" inputmode="decimal" enterkeyhint="done" step="1" min="0" placeholder="0">
           <span class="eur" id="unite">€</span>
         </div>
       </div>
@@ -331,7 +336,7 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
       <div class="champ">
         <div class="tete-champ"><label>Prix du mobile (TTC)</label></div>
         <div class="boite">
-          <input id="prixMobile" type="number" inputmode="decimal" step="1" min="0" placeholder="0">
+          <input id="prixMobile" type="number" inputmode="decimal" enterkeyhint="done" step="1" min="0" placeholder="0">
           <span class="eur">€</span>
         </div>
       </div>
@@ -354,9 +359,10 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   </footer>
 </main>
 
-<div class="dock">
+<div class="dock" id="dock">
   <button type="button" id="btnReset">Effacer</button>
   <button type="button" id="btnCopie" class="primaire">Copier la simulation</button>
+  <button type="button" id="btnValider" class="primaire valider">✓&nbsp; Valider</button>
 </div>
 
 <script>
@@ -686,6 +692,35 @@ $('#btnReset').addEventListener('click', () => {
   eEcOn.checked = false; eEcCorps.classList.remove('on'); ecManuel = null;
   calculer(); eMontant.focus();
 });
+
+/* --- Valider : ferme le clavier et fait defiler jusqu'aux resultats --- */
+const eDock = $('#dock'), eValider = $('#btnValider');
+const champs = [eMontant, eBudget, ePrix];
+
+function valider(){
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  eDock.classList.remove('saisie');
+  const entete = document.querySelector('header').offsetHeight;
+  const y = eRes.getBoundingClientRect().top + window.scrollY - entete - 10;
+  window.scrollTo({top: Math.max(0, y), behavior:'smooth'});
+}
+
+champs.forEach(el => {
+  el.addEventListener('focus', () => eDock.classList.add('saisie'));
+  el.addEventListener('blur', () => setTimeout(() => {
+    if (!champs.includes(document.activeElement)) eDock.classList.remove('saisie');
+  }, 80));
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (el === eMontant) eBudget.focus(); else valider();
+  });
+});
+
+// pointerdown neutralise : le champ garde le focus jusqu'au clic, sinon la
+// barre se reconfigure sous le doigt avant que l'appui ne soit pris en compte
+eValider.addEventListener('pointerdown', e => e.preventDefault());
+eValider.addEventListener('click', valider);
 
 $('#btnCopie').addEventListener('click', async e => {
   const btn = e.currentTarget, txt = texteSimu();
