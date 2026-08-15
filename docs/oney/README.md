@@ -15,7 +15,15 @@ et l'assurance mobile (EC).
      0 / 2 / 4 / 7 / 10 €. Le tarif correspondant au montant à financer
      (= prix du mobile) est marqué **CONSEILLÉ**.
 3. Saisir le **montant à financer** et le **budget mensuel**
+   (pastilles de budget rapides : 20 à 150 €)
 4. Tout se recalcule en direct, sans bouton
+
+Chaque carte affiche la durée en gros, une jauge qui compare visuellement les
+durées entre elles, les trois chiffres clés (coût du crédit, coût par mois,
+total payé) et l'écart par rapport à la garantie de base (« +1 mois · +12,97 € »).
+
+Le bouton ☀/☾ en haut à droite bascule entre thème sombre et thème clair
+(pratique sous les néons du magasin). Le choix est mémorisé.
 
 Installation sur le téléphone : « Ajouter à l'écran d'accueil » (Android : menu Chrome,
 iPhone : bouton Partager). L'app fonctionne ensuite hors ligne.
