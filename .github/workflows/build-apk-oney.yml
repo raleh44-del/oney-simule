@@ -1,0 +1,65 @@
+name: Build Simu Oney APK
+
+on:
+  push:
+    branches:
+      - main
+      - claude/phone-insurance-simulation-app-qctcuo
+    paths:
+      - 'docs/oney/index.html'
+      - 'android-oney/**'
+      - '.github/workflows/build-apk-oney.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        working-directory: android-oney
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: cp android-oney/app/build/outputs/apk/debug/app-debug.apk SimuOney-debug.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SimuOney-apk
+          path: SimuOney-debug.apk
+          if-no-files-found: error
+
+      # La release n'est publiee que depuis main, pour ne pas diffuser un build de branche
+      - name: Publish APK to a Release (lien de telechargement direct)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: oney-apk-latest
+          name: Simu Oney — dernier APK
+          body: |
+            APK du simulateur Oney (garanties ES et assurance mobile EC),
+            regenere automatiquement a chaque modification du simulateur.
+
+            Telecharge **SimuOney-debug.apk** ci-dessous et installe-le sur Android
+            (autorise l'installation depuis cette source si le telephone le demande).
+
+            L'application fonctionne entierement hors ligne.
+          files: SimuOney-debug.apk
+          prerelease: true
