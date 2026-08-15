@@ -1,0 +1,38 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.simuoney.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.simuoney.app'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Copie automatiquement l'app web dans les assets avant chaque build.
+// Source unique : docs/oney/index.html, le meme fichier que la version en ligne.
+tasks.register('syncWebApp', Copy) {
+    from file("${rootProject.projectDir}/../docs/oney/index.html")
+    into file("${projectDir}/src/main/assets")
+    rename { 'index.html' }
+}
+tasks.named('preBuild') {
+    dependsOn 'syncWebApp'
+}
