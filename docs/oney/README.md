@@ -7,10 +7,15 @@ et l'assurance mobile (EC).
 ## Utilisation
 
 1. Ouvrir <https://raleh44-del.github.io/simulateur-armes/oney/>
-2. Saisir le **montant à financer** et le **budget mensuel**
-3. Activer l'**assurance mobile EC** si besoin (le tarif se déduit du prix du mobile,
-   ou se force via les pastilles 2 / 4 / 7 / 10 €)
-4. Les 4 colonnes se calculent en direct : sans ES, XL, 2XL, 3XL
+2. Choisir le mode en haut de l'écran :
+   - **Garanties ES** — les cartes comparent base / XL / 2XL / 3XL.
+     L'assurance mobile EC reste disponible en option : elle s'ajoute alors à
+     chaque garantie (financement d'un appareil **et** d'un mobile).
+   - **Assurance EC** — les cartes ES sont remplacées par les tarifs mobile
+     0 / 2 / 4 / 7 / 10 €. Le tarif correspondant au montant à financer
+     (= prix du mobile) est marqué **CONSEILLÉ**.
+3. Saisir le **montant à financer** et le **budget mensuel**
+4. Tout se recalcule en direct, sans bouton
 
 Installation sur le téléphone : « Ajouter à l'écran d'accueil » (Android : menu Chrome,
 iPhone : bouton Partager). L'app fonctionne ensuite hors ligne.

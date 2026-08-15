@@ -48,8 +48,23 @@ header p{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap}
   white-space:nowrap;
 }
 
-/* ---------- SAISIE ---------- */
+/* ---------- SELECTEUR DE MODE ---------- */
 main{padding:14px 12px 0}
+.modes{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  background:var(--bg2);border:1px solid var(--line);border-radius:15px;
+  padding:5px;margin-bottom:12px;
+}
+.mode{
+  background:transparent;border:0;border-radius:11px;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:800;color:var(--muted);
+  padding:11px 4px;line-height:1.25;transition:.12s;
+}
+.mode span{display:block;font-size:9.5px;font-weight:700;opacity:.75;margin-top:1px}
+.mode.on{background:var(--jaune);color:#101318}
+.mode.on span{opacity:.7}
+
+/* ---------- SAISIE ---------- */
 .card{
   background:var(--bg2);border:1px solid var(--line);border-radius:16px;
   padding:14px;margin-bottom:12px;
@@ -104,12 +119,16 @@ input[type=number]{-moz-appearance:textfield}
 .res.off{opacity:.45}
 .res-top{padding:10px 13px;display:flex;align-items:center;gap:8px;color:#101318}
 .res-top .nom{font-size:15px;font-weight:900;letter-spacing:.3px}
+.res-top .sous{font-size:10.5px;font-weight:700;opacity:.62;margin-top:1px}
 .res-top .prime{margin-left:auto;font-size:12px;font-weight:800;background:rgba(0,0,0,.22);
   border-radius:999px;padding:3px 9px}
 .c-base{background:#dfe4ea}
 .c-xl{background:var(--jaune)}
 .c-2xl{background:#a8d4f5}
 .c-3xl{background:#8ee0ac}
+.c-ec{background:#f6b48a}
+.reco{background:#101318;color:var(--jaune);font-size:9.5px;font-weight:800;
+  border-radius:999px;padding:3px 8px;margin-left:6px;white-space:nowrap}
 .res-body{padding:12px 13px}
 .duree{display:flex;flex-direction:column;gap:3px;margin-bottom:11px}
 .duree .l{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
@@ -149,6 +168,12 @@ footer{padding:16px 16px 0;font-size:10.5px;color:#6c7482;line-height:1.5;text-a
 
 <main>
 
+  <!-- MODE -->
+  <div class="modes" id="modes">
+    <button class="mode on" data-mode="es" type="button">Garanties ES<span>base · XL · 2XL · 3XL</span></button>
+    <button class="mode" data-mode="ec" type="button">Assurance EC<span>mobile : 2 · 4 · 7 · 10 €</span></button>
+  </div>
+
   <!-- SAISIE -->
   <div class="card">
     <div class="grid2">
@@ -169,8 +194,8 @@ footer{padding:16px 16px 0;font-size:10.5px;color:#6c7482;line-height:1.5;text-a
     </div>
   </div>
 
-  <!-- ASSURANCE MOBILE EC -->
-  <div class="card">
+  <!-- ASSURANCE MOBILE EC (option, en mode ES) -->
+  <div class="card" id="carteEC">
     <div class="ec-head">
       <div>
         <div class="t">Assurance mobile <span style="color:var(--jaune)">EC</span></div>
@@ -217,10 +242,19 @@ const TAUX_MENSUEL = Math.pow(1 + TAEG, 1/12) - 1;    // ≈ 1,5661 % / mois
 
 /* Garanties ES : prime mensuelle prélevée sur le budget */
 const ES = [
-  {id:'base', nom:'GARANTIE DE BASE', sous:'incluse',            prime:0,  cls:'c-base'},
-  {id:'xl',   nom:'ELECTROSÛR XL',    sous:'Électro OU Image&Son',prime:6,  cls:'c-xl'},
-  {id:'2xl',  nom:'ELECTROSÛR 2XL',   sous:'2 univers',           prime:11, cls:'c-2xl'},
-  {id:'3xl',  nom:'ELECTROSÛR 3XL',   sous:'3 univers',           prime:15, cls:'c-3xl'}
+  {type:'ES', nom:'GARANTIE DE BASE', sous:'garantie légale',  prime:0,  cls:'c-base'},
+  {type:'ES', nom:'ELECTROSÛR XL',    sous:'1 univers produit',prime:6,  cls:'c-xl'},
+  {type:'ES', nom:'ELECTROSÛR 2XL',   sous:'2 univers',        prime:11, cls:'c-2xl'},
+  {type:'ES', nom:'ELECTROSÛR 3XL',   sous:'3 univers',        prime:15, cls:'c-3xl'}
+];
+
+/* Assurance mobile EC : prime mensuelle prélevée sur le budget */
+const EC = [
+  {type:'EC', nom:'SANS ASSURANCE', sous:'mobile non couvert',      prime:0,  cls:'c-base'},
+  {type:'EC', nom:'EC 2 €',  sous:"mobile jusqu'à 149,99 €", prime:2,  cls:'c-xl'},
+  {type:'EC', nom:'EC 4 €',  sous:'mobile de 150 à 299,99 €',prime:4,  cls:'c-2xl'},
+  {type:'EC', nom:'EC 7 €',  sous:'mobile de 300 à 499,99 €',prime:7,  cls:'c-3xl'},
+  {type:'EC', nom:'EC 10 €', sous:'mobile à partir de 500 €', prime:10, cls:'c-ec'}
 ];
 
 /* Barème assurance mobile EC selon le prix TTC du mobile */
@@ -258,9 +292,11 @@ function simuler(capital, mensualiteCredit){
 const $ = s => document.querySelector(s);
 const eMontant = $('#montant'), eBudget = $('#budget'), ePrix = $('#prixMobile'),
       eEcOn = $('#ecOn'), eEcBody = $('#ecBody'), eChips = $('#chips'),
-      eRes = $('#resultats'), eAlerte = $('#alerte');
+      eRes = $('#resultats'), eAlerte = $('#alerte'),
+      eModes = $('#modes'), eCarteEC = $('#carteEC');
 
 let ecManuel = null;   // prime EC forcée par un chip (sinon calculée sur le prix)
+let mode = 'es';       // 'es' = garanties ElectroSûr | 'ec' = assurance mobile
 
 const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : 0; };
 const eur = v => v.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
@@ -275,7 +311,12 @@ function primeECActive(){
 function calculer(){
   const capital = num(eMontant.value);
   const budget  = num(eBudget.value);
-  const ec      = primeECActive();
+  // en mode EC, les cartes SONT les tarifs d'assurance : pas de prime additionnelle
+  const ec      = mode === 'es' ? primeECActive() : 0;
+
+  // boutons de mode + carte EC optionnelle (mode ES uniquement)
+  eModes.querySelectorAll('.mode').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+  eCarteEC.style.display = mode === 'es' ? '' : 'none';
 
   // chips : surligne le tarif actif
   const actif = ecManuel !== null ? ecManuel : primeEC(num(ePrix.value));
@@ -292,28 +333,39 @@ function calculer(){
     return;
   }
 
-  eAlerte.innerHTML = ec > 0
-    ? '<div class="card" style="padding:10px 13px;font-size:12.5px;color:var(--muted);margin-bottom:12px">' +
-      'Assurance mobile <b style="color:var(--jaune)">EC ' + eur0(ec) + '/mois</b> incluse dans le budget ' +
-      '→ il reste ' + eur0(budget - ec) + '/mois pour le crédit + la garantie ES.</div>'
-    : '';
+  const info = s => '<div class="card" style="padding:10px 13px;font-size:12.5px;' +
+    'color:var(--muted);margin-bottom:12px">' + s + '</div>';
 
-  eRes.innerHTML = ES.map(g => carte(g, capital, budget, ec)).join('');
+  if (mode === 'ec'){
+    eAlerte.innerHTML = info('Tarif conseillé d\'après le montant à financer (' + eur0(capital) +
+      ') : <b style="color:var(--jaune)">EC ' + eur0(primeEC(capital)) + '/mois</b>.');
+    eRes.innerHTML = EC.map(g =>
+      carte(g, capital, budget, 0, g.prime === primeEC(capital))).join('');
+  } else {
+    eAlerte.innerHTML = ec > 0
+      ? info('Assurance mobile <b style="color:var(--jaune)">EC ' + eur0(ec) + '/mois</b> incluse dans le budget ' +
+             '→ il reste ' + eur0(budget - ec) + '/mois pour le crédit + la garantie ES.')
+      : '';
+    eRes.innerHTML = ES.map(g => carte(g, capital, budget, ec)).join('');
+  }
 }
 
-function carte(g, capital, budget, ec){
+function carte(g, capital, budget, ec, conseille){
   const mensCredit = budget - g.prime - ec;
   const r = simuler(capital, mensCredit);
+  const sansPrime = g.type === 'EC' ? '0 €/mois' : 'sans ES';
 
   const entete =
     '<div class="res-top ' + g.cls + '">' +
-      '<div><div class="nom">' + g.nom + '</div></div>' +
-      '<div class="prime">' + (g.prime ? '+ ' + eur0(g.prime) + '/mois' : 'sans ES') + '</div>' +
+      '<div><div class="nom">' + g.nom +
+        (conseille ? '<span class="reco">CONSEILLÉ</span>' : '') + '</div>' +
+        '<div class="sous">' + g.sous + '</div></div>' +
+      '<div class="prime">' + (g.prime ? '+ ' + eur0(g.prime) + '/mois' : sansPrime) + '</div>' +
     '</div>';
 
   if (!r.ok){
     const msg = {
-      budget:   'Budget trop faible : les garanties (' + eur0(g.prime + ec) + '/mois) dépassent le budget.',
+      budget:   'Budget trop faible : les primes (' + eur0(g.prime + ec) + '/mois) dépassent le budget.',
       interets: 'Budget trop faible : ' + eur0(mensCredit) + '/mois ne couvre même pas les intérêts.',
       trop_long:'Durée supérieure à 600 mois.',
       vide:     'Montant invalide.'
@@ -336,7 +388,8 @@ function carte(g, capital, budget, ec){
     : '';
 
   const detail = [];
-  if (g.prime) detail.push('Garantie ES : <b>' + eur0(g.prime) + ' × ' + r.mois + ' = ' + eur0(totalES) + '</b>');
+  if (g.prime) detail.push((g.type === 'EC' ? 'Assurance EC' : 'Garantie ES') +
+    ' : <b>' + eur0(g.prime) + ' × ' + r.mois + ' = ' + eur0(totalES) + '</b>');
   if (ec)      detail.push('Assurance EC : <b>' + eur0(ec) + ' × ' + r.mois + ' = ' + eur0(totalEC) + '</b>');
   const alerteDuree = (r.mois + 1) > 48
     ? '<div class="note" style="color:#ffb3b6">⚠ Durée ' + (r.mois + 1) + ' mois — au-delà du barème habituel.</div>'
@@ -357,13 +410,15 @@ function carte(g, capital, budget, ec){
 
 /* ===================== TEXTE À COPIER ===================== */
 function texteSimu(){
-  const capital = num(eMontant.value), budget = num(eBudget.value), ec = primeECActive();
+  const capital = num(eMontant.value), budget = num(eBudget.value);
+  const ec = mode === 'es' ? primeECActive() : 0;
   if (!(capital > 0 && budget > 0)) return 'Simulation vide.';
-  let t = 'SIMULATION ONEY — TAEG 20,50 %\n' +
+  let t = 'SIMULATION ONEY — TAEG 20,50 % — ' +
+          (mode === 'ec' ? 'ASSURANCE MOBILE EC' : 'GARANTIES ES') + '\n' +
           'Montant à financer : ' + eur0(capital) + '\n' +
           'Budget mensuel : ' + eur0(budget) + '\n' +
           (ec ? 'Assurance mobile EC : ' + eur0(ec) + '/mois\n' : '') + '\n';
-  ES.forEach(g => {
+  (mode === 'ec' ? EC : ES).forEach(g => {
     const r = simuler(capital, budget - g.prime - ec);
     t += (g.prime ? g.nom + ' (+' + eur0(g.prime) + '/mois)' : g.nom) + '\n';
     t += r.ok
@@ -382,6 +437,13 @@ function texteSimu(){
 
 eEcOn.addEventListener('change', () => {
   eEcBody.classList.toggle('on', eEcOn.checked);
+  calculer();
+});
+
+eModes.addEventListener('click', e => {
+  const b = e.target.closest('.mode');
+  if (!b) return;
+  mode = b.dataset.mode;
   calculer();
 });
 
@@ -415,7 +477,7 @@ $('#btnCopie').addEventListener('click', async e => {
 function sauver(){
   try{
     localStorage.setItem('simuOney', JSON.stringify({
-      m:eMontant.value, b:eBudget.value, p:ePrix.value, e:eEcOn.checked, c:ecManuel
+      m:eMontant.value, b:eBudget.value, p:ePrix.value, e:eEcOn.checked, c:ecManuel, mode:mode
     }));
   }catch(_){}
 }
@@ -427,6 +489,7 @@ function charger(){
     if (d.p) ePrix.value = d.p;
     if (d.e){ eEcOn.checked = true; eEcBody.classList.add('on'); }
     if (typeof d.c === 'number') ecManuel = d.c;
+    if (d.mode === 'ec' || d.mode === 'es') mode = d.mode;
   }catch(_){}
 }
 charger();
