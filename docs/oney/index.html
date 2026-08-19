@@ -237,6 +237,60 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .dock.saisie .valider{display:block}
 .dock.saisie #btnCopie,.dock.saisie #btnReset{display:none}
 footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.55;text-align:center}
+
+/* ===================== TABLETTE ===================== */
+@media (min-width:640px){
+  body{max-width:820px}
+  #resultats{display:grid;grid-template-columns:repeat(2,1fr);align-items:start}
+}
+
+/* ===================== BUREAU (poste de caisse) =====================
+   Les options passent cote a cote, comme sur le simulateur d'origine. */
+@media (min-width:900px){
+  body{max-width:1180px;padding-bottom:calc(96px + var(--safe-b))}
+  header{padding:12px 22px}
+  .lockup{height:46px}
+  header .sub{font-size:12px}
+
+  main{
+    padding:18px 20px 0;
+    display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
+    gap:14px;align-items:start;
+  }
+  .seg{grid-column:1/-1;max-width:470px}
+  #alerte,#resultats,footer{grid-column:1/-1}
+  main.solo #carteSaisie{grid-column:1/-1}
+  main.solo .duo{max-width:640px}
+
+  /* une colonne par option */
+  #resultats.n4{grid-template-columns:repeat(4,1fr)}
+  #resultats.n5{grid-template-columns:repeat(5,1fr)}
+
+  /* colonnes etroites : les indicateurs passent en liste */
+  .kpi{grid-template-columns:1fr;gap:5px}
+  .kpi div{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .kpi span{white-space:normal}
+  .kpi b{margin-top:0}
+  .grand b{font-size:27px}
+  .bas{flex-direction:column;align-items:flex-start}
+
+  .dock{
+    max-width:1180px;justify-content:flex-end;
+    border-radius:16px 16px 0 0;border:1px solid var(--line);border-bottom:0;
+  }
+  .dock button{flex:0 0 auto;min-width:200px}
+  .dock .primaire{flex:0 0 auto}
+  /* pas de clavier virtuel sur un poste fixe : la barre ne change pas a la saisie */
+  .dock.saisie .valider{display:none}
+  .dock.saisie #btnCopie,.dock.saisie #btnReset{display:block}
+
+  /* colonnes etroites : on resserre l'en-tete des cartes et on fige sa
+     hauteur, sinon un sous-titre sur deux lignes desaligne les chiffres */
+  .tete{min-height:66px}
+  .nom{font-size:13px}
+  .sous{font-size:10.5px}
+  .prime{font-size:12.5px;padding:4px 8px}
+}
 </style>
 </head>
 <body>
@@ -293,7 +347,7 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   </div>
 
   <!-- SAISIE -->
-  <section class="panel">
+  <section class="panel" id="carteSaisie">
     <div class="duo">
       <div class="champ">
         <div class="tete-champ">
@@ -544,6 +598,10 @@ function calculer(){
   const jaugeVal = r => calcul === 'duree' ? r.mensualite : r.echeances;
   const maxJauge = Math.max(1, ...calculs.filter(c => c.r.ok).map(c => jaugeVal(c.r)));
   const base = calculs[0].r;
+
+  // le nombre de cartes pilote la grille en version bureau
+  eRes.className = 'n' + liste.length;
+  document.querySelector('main').classList.toggle('solo', mode !== 'es');
 
   eRes.innerHTML = calculs.map(c =>
     carte(c.g, c.r, valeur, ec, maxJauge, base, c.g.prime === conseille)).join('');
