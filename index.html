@@ -48,9 +48,11 @@ header{
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
   padding:calc(9px + env(safe-area-inset-top,0px)) 14px 9px;
-  display:flex; flex-direction:column; gap:5px;
+  display:flex; flex-direction:column;
 }
-.hrow{display:flex;align-items:center;gap:11px}
+/* telephone : le sous-titre passe a la ligne sous le logo */
+.hrow{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.badge{display:none}
 .lockup{
   height:38px;width:auto;flex:0 0 auto;
   --logo-txt:var(--txt);      /* « ELECTRO DÉPÔT » */
@@ -58,7 +60,8 @@ header{
 }
 html[data-theme="clair"] .lockup{--logo-dark:#111318}
 header .sub{font-size:10.5px;color:var(--muted);white-space:nowrap;
-  display:flex;align-items:center;gap:5px}
+  display:flex;align-items:center;gap:5px;
+  order:3;flex:1 0 100%;margin-top:5px}
 header .sub i{width:5px;height:5px;border-radius:50%;background:var(--jaune);display:inline-block}
 .icone{
   margin-left:auto;width:38px;height:38px;flex:0 0 auto;
@@ -290,16 +293,29 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
    La saisie devient un panneau lateral qui reste sous les yeux, les
    resultats occupent toute la largeur restante. */
 @media (min-width:1000px){
-  body{max-width:1280px;padding-bottom:24px}
-  header{padding:12px 22px}
-  .lockup{height:46px}
-  header .sub{font-size:12px}
+  body{max-width:1280px;padding-bottom:0;min-height:100dvh;display:flex;flex-direction:column}
+  .lockup{height:40px}
+
+  /* en-tete sur une seule ligne : identite a gauche, operation et theme a
+     droite, au lieu d'une bande a moitie vide */
+  header{padding:9px 22px}
+  .hrow{flex-wrap:nowrap;gap:14px}
+  header .sub{order:0;flex:0 1 auto;margin-top:0;font-size:12px;
+    padding-left:14px;border-left:1px solid var(--line)}
+  header .sub .sub-taeg{display:none}
+  .badge{
+    display:block;margin-left:auto;white-space:nowrap;
+    background:var(--surf2);border:1px solid var(--line);border-radius:999px;
+    padding:6px 13px;font-size:11.5px;font-weight:700;color:var(--muted);
+  }
+  .badge b{color:var(--jaune);font-weight:800;margin-left:3px}
+  .icone{margin-left:0}
 
   main{
-    padding:18px 20px 24px;
+    flex:1;padding:18px 20px 24px;
     display:grid;
     grid-template-columns:minmax(330px,360px) minmax(0,1fr);
-    gap:18px;align-items:start;
+    gap:18px;align-items:start;align-content:space-between;
   }
 
   /* --- colonne de gauche : mode, saisie, option EC, actions --- */
@@ -317,8 +333,7 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   footer{grid-column:1/-1;padding-top:22px}
 
   /* une colonne par option payante : 3 en mode ES, 2 cartes en mode EC.
-     Les cartes s'etirent a la meme hauteur : les colonnes restent alignees. */
-  #resultats{align-items:stretch}
+     Chaque carte s'arrete a son contenu : pas de bas de carte vide. */
   #resultats.n3{grid-template-columns:repeat(3,1fr)}
   #resultats.n4{grid-template-columns:repeat(4,1fr)}
 
@@ -401,9 +416,10 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
             letter-spacing="1.4" fill="var(--logo-txt)">ELECTRO DÉPÔT</text>
       <rect x="262" y="95" width="76" height="6" rx="3" fill="#FFC220"/>
     </svg>
+    <div class="sub"><i></i><span>Simulateur ES &amp; EC</span><span class="sub-taeg"> · Crédit rond, TAEG 20,50 %</span></div>
+    <div class="badge">Crédit rond <b>TAEG 20,50 %</b></div>
     <button class="icone" id="theme" type="button" aria-label="Changer de thème">☀</button>
   </div>
-  <div class="sub"><i></i>Simulateur ES &amp; EC · Crédit rond, TAEG 20,50 %</div>
 </header>
 
 <main>
