@@ -287,44 +287,16 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   header .sub{display:flex}
   #resultats{display:grid;grid-template-columns:repeat(2,1fr);align-items:start}
 
-  /* La garantie de base / le « sans assurance » n'est pas une option a vendre :
-     c'est la reference. Sur grand ecran elle devient un bandeau pleine largeur
-     et laisse les colonnes aux seules options payantes. */
-  .opt.ref{
-    grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;
-    gap:8px 22px;padding:11px 16px;
-  }
-  .opt.ref .tete{margin-bottom:0;min-height:0;flex:0 0 200px;align-items:center}
-  .opt.ref .prime,.opt.ref .jauge,.opt.ref .bas{display:none}
-  .opt.ref .grand,.opt.ref .puis{flex:0 0 auto;margin-top:0}
-  .opt.ref .grand b{font-size:26px}
-  .opt.ref .kpi{
-    flex:1;min-width:300px;display:grid;grid-template-columns:repeat(3,1fr);
-    border-top:0;padding-top:0;
-  }
-  .opt.ref .kpi div{display:block}
-  .opt.ref .kpi b{margin-top:3px}
-
-  /* Une seule option payante (mode EC) : deux cartes de meme forme cote a
-     cote, plutot qu'un bandeau et une colonne perdue au milieu. */
-  #resultats.n1{grid-template-columns:repeat(2,1fr)}
-  #resultats.n1 .opt.ref{grid-column:auto;display:block;padding:13px 14px 12px}
-  #resultats.n1 .opt.ref .tete{margin-bottom:11px;align-items:flex-start}
-  #resultats.n1 .opt.ref .prime{display:block}
-  #resultats.n1 .opt.ref .jauge{display:flex}
-  #resultats.n1 .opt.ref .bas{display:flex}
-  #resultats.n1 .opt.ref .grand,#resultats.n1 .opt.ref .puis{flex:none}
-  #resultats.n1 .opt.ref .kpi{
-    display:grid;grid-template-columns:repeat(3,1fr);min-width:0;
-    border-top:1px solid var(--line);padding-top:10px;
-  }
+  /* Toutes les formules sont presentees de la meme facon, la reference
+     comprise : une carte par colonne. */
+  #resultats.n2{grid-template-columns:repeat(2,1fr)}
 }
 
 /* ===================== BUREAU (poste de caisse) =====================
    La saisie devient un panneau lateral qui reste sous les yeux, les
    resultats occupent toute la largeur restante. */
 @media (min-width:1000px){
-  body{max-width:1280px;padding-bottom:0;min-height:100dvh;display:flex;flex-direction:column}
+  body{max-width:1440px;padding-bottom:0;min-height:100dvh;display:flex;flex-direction:column}
   .lockup{height:40px}
 
   /* en-tete sur une seule ligne : identite a gauche, operation et theme a
@@ -341,7 +313,7 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   main{
     flex:1;padding:18px 20px 24px;
     display:grid;
-    grid-template-columns:minmax(330px,360px) minmax(0,1fr);
+    grid-template-columns:minmax(296px,330px) minmax(0,1fr);
     gap:18px;align-items:start;align-content:space-between;
   }
 
@@ -359,9 +331,8 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   #alerte:empty{display:none}
   footer{grid-column:1/-1;padding-top:22px}
 
-  /* une colonne par option payante : 3 en mode ES, 2 cartes en mode EC.
-     Chaque carte s'arrete a son contenu : pas de bas de carte vide. */
-  #resultats.n3{grid-template-columns:repeat(3,1fr)}
+  /* une colonne par formule : 4 en mode ES, 2 en mode EC */
+  #resultats.n2{grid-template-columns:repeat(2,1fr)}
   #resultats.n4{grid-template-columns:repeat(4,1fr)}
 
   /* colonnes etroites : les indicateurs passent en liste */
@@ -389,16 +360,6 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   /* pas de clavier virtuel : le bouton Valider n'a pas lieu d'etre */
   .dock.saisie .valider{display:none}
   .dock.saisie #btnCopie,.dock.saisie #btnReset{display:block}
-}
-
-/* Sur poste fixe les colonnes sont etroites : la carte de reference du mode
-   EC aligne ses indicateurs en liste, comme les autres. */
-@media (min-width:1000px){
-  #resultats.n1 .opt.ref .tete{min-height:66px}
-  #resultats.n1 .opt.ref .kpi{grid-template-columns:1fr;gap:5px}
-  #resultats.n1 .opt.ref .kpi div{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-  #resultats.n1 .opt.ref .kpi b{margin-top:0}
-  #resultats.n1 .opt.ref .grand b{font-size:27px}
 }
 
 </style>
@@ -806,17 +767,16 @@ function calculer(){
   const maxJauge = Math.max(1, ...calculs.filter(c => c.r.ok).map(c => jaugeVal(c.r)));
   const base = calculs[0].r;
 
-  // la 1re option (sans prime) sert de reference : en version bureau elle
-  // passe en bandeau pleine largeur, seules les options payantes font colonne
-  eRes.className = 'n' + (liste.length - 1);
+  // une colonne par formule, la reference comprise
+  eRes.className = 'n' + liste.length;
   document.querySelector('main').classList.toggle('solo', mode !== 'es');
 
-  eRes.innerHTML = calculs.map((c, i) =>
+  eRes.innerHTML = calculs.map(c =>
     carte(c.g, c.r, valeur, ec, maxJauge, base,
-          c.g.prime !== 0 && c.g.prime === primeAuto, i === 0)).join('');
+          c.g.prime !== 0 && c.g.prime === primeAuto)).join('');
 }
 
-function carte(g, r, valeur, ec, maxJauge, base, conseille, reference){
+function carte(g, r, valeur, ec, maxJauge, base, conseille){
   const tete =
     '<div class="tete">' +
       '<div><div class="nom"><span class="pastille"></span>' + g.nom +
@@ -828,14 +788,14 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille, reference){
 
   if (!r.ok){
     const msg = {
-      budget:   'Les primes (' + eur0(g.prime + ec) + '/mois) dépassent le budget.',
+      budget:   'Les options (' + eur0(g.prime + ec) + '/mois) dépassent le budget.',
       interets: 'Budget trop faible : il ne reste que ' + eur0(valeur - g.prime - ec) +
                 '/mois pour le crédit, les intérêts ne sont pas couverts.',
       trop_long:'Durée supérieure à 600 mois.',
       duree:    'Durée invalide.',
       vide:     'Montant invalide.'
     }[r.motif];
-    return '<article class="opt ko' + (reference ? ' ref' : '') + '" style="--opt:' + g.col + '">' + tete +
+    return '<article class="opt ko" style="--opt:' + g.col + '">' + tete +
       '<div class="alerte-ko">' + msg + '</div></article>';
   }
 
@@ -867,8 +827,8 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille, reference){
   if (ec) puces.push('<em>EC ' + eur0(ec) + ' × ' + r.moisPrime +
     ' = <b>' + eur0(ec * r.moisPrime) + '</b></em>');
   if (r.moisApres && (g.prime || ec))
-    puces.push('<em style="color:#ffc400">engagement 1 an : <b>' + r.moisApres +
-      ' mois</b> de prime après la fin du crédit</em>');
+    puces.push('<em style="color:#ffc400">engagement 1 an : <b>' + r.moisApres + ' mois à ' +
+      eur0(g.prime + ec) + '</b> après la fin du crédit</em>');
   if (base.ok && g.prime){
     puces.push(r.sens === 'duree'
       ? '<em>vs base : <b>+' + eur(r.mensualite - base.mensualite) + '/mois</b> · <b>+' +
@@ -878,8 +838,7 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille, reference){
   }
   if (r.echeances > 48) puces.push('<em style="color:#ff9ea1">⚠ au-delà du barème habituel</em>');
 
-  return '<article class="opt' + (conseille ? ' top' : '') + (reference ? ' ref' : '') +
-    '" style="--opt:' + g.col + '">' +
+  return '<article class="opt' + (conseille ? ' top' : '') + '" style="--opt:' + g.col + '">' +
     tete + grand + jauge +
     '<div class="kpi">' +
       '<div><span>Coût du crédit</span><b>' + eur(r.interets) + '</b></div>' +
@@ -911,7 +870,8 @@ function texteSimu(){
       : '  ' + (r.mois ? r.mois + ' mois à ' + eur0(valeur) + ' + ' : '') +
         '1 mois à ' + eur(r.derniere) + '\n  Coût du crédit : ' + eur(r.interets) + '\n';
     if (r.moisApres && g.prime)
-      t += '  Engagement 1 an : ' + r.moisApres + ' mois de prime après la fin du crédit\n';
+      t += '  Engagement 1 an : ' + r.moisApres + ' mois à ' + eur0(g.prime + ec) +
+           ' après la fin du crédit\n';
     t += '\n';
   });
   return t;
