@@ -192,12 +192,14 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .memo li{margin-bottom:3px}
 .memo .tel{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--txt);
   font-weight:800;text-decoration:none;border-bottom:1px dotted var(--line2)}
-.btn-mail{
-  display:block;width:100%;margin-top:10px;cursor:pointer;font-family:inherit;
-  background:linear-gradient(145deg,var(--jaune),#ffb300);color:#0b0d12;
-  border:0;border-radius:11px;padding:11px;font-size:12.5px;font-weight:800;
+.memo-actions{display:flex;gap:6px;margin-top:10px}
+.btn-mail,.btn-copie{
+  cursor:pointer;font-family:inherit;border-radius:11px;padding:11px 8px;
+  font-size:12px;font-weight:800;border:0;
 }
-.btn-mail:active{transform:scale(.985)}
+.btn-mail{flex:1.5;background:linear-gradient(145deg,var(--jaune),#ffb300);color:#0b0d12}
+.btn-copie{flex:1;background:var(--surf2);border:1px solid var(--line);color:var(--txt)}
+.btn-mail:active,.btn-copie:active{transform:scale(.985)}
 .btn-note{margin-top:6px;font-size:10px;line-height:1.4;color:var(--faint)}
 .memo .src{margin-top:13px;font-size:9.5px;color:var(--faint);border-top:1px solid var(--line);
   padding-top:8px}
@@ -444,11 +446,15 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
         <li>L'adhésion est conclue pour <b>un an</b>, puis reconduite tacitement par périodes d'un an.</li>
         <li><b>Renonciation sous 30 jours</b> si le client est déjà couvert ailleurs pour le même risque : sans frais, prime remboursée sous 30 jours.</li>
         <li>Ensuite, résiliation possible <b>à partir de la 1<sup>re</sup> échéance annuelle</b> ; elle prend fin un mois après réception de la demande.</li>
-        <li>Demande à <a href="mailto:electrosur@verspieren.com">electrosur@verspieren.com</a></li>
+        <li>Demande à <a id="mailResil" href="mailto:electrosur@verspieren.com">electrosur@verspieren.com</a></li>
       </ul>
-      <button type="button" class="btn-mail" id="btnResil">✉&nbsp; Préparer le mail de résiliation</button>
-      <div class="btn-note">Ouvre la messagerie du client avec la lettre déjà écrite. Il n'a plus
-      qu'à compléter ses coordonnées et envoyer.</div>
+      <div class="memo-actions">
+        <button type="button" class="btn-mail" id="btnResil">✉&nbsp; Préparer le mail</button>
+        <button type="button" class="btn-copie" id="btnCopieResil">Copier le texte</button>
+      </div>
+      <div class="btn-note">Ouvre la messagerie avec la lettre déjà écrite : le client complète ses
+      coordonnées et envoie. Si rien ne s'ouvre — poste sans messagerie configurée — utilise
+      « Copier le texte » et colle-le dans le webmail.</div>
       <ul style="display:none">
       </ul>
 
@@ -1004,8 +1010,8 @@ $('#btnCopie').addEventListener('click', async e => {
   Ouvre la messagerie avec une demande de resiliation deja redigee.
   Le client n'a plus qu'a completer ses coordonnees et envoyer.
 */
-$('#btnResil').addEventListener('click', () => {
-  const sujet = 'Résiliation de mon adhésion ElectroSûr';
+const SUJET_RESIL = 'Résiliation de mon adhésion ElectroSûr';
+const LETTRE_RESIL = (() => {
   const corps = [
     'Madame, Monsieur,',
     '',
@@ -1027,9 +1033,29 @@ $('#btnResil').addEventListener('click', () => {
     '',
     'Prénom NOM'
   ].join('\n');
-  window.location.href = 'mailto:electrosur@verspieren.com' +
-    '?subject=' + encodeURIComponent(sujet) +
-    '&body=' + encodeURIComponent(corps);
+  return corps;
+})();
+
+const LIEN_RESIL = 'mailto:electrosur@verspieren.com' +
+  '?subject=' + encodeURIComponent(SUJET_RESIL) +
+  '&body=' + encodeURIComponent(LETTRE_RESIL);
+
+// le bouton et l'adresse elle-meme ouvrent la meme lettre
+$('#mailResil').href = LIEN_RESIL;
+$('#btnResil').addEventListener('click', () => { window.location.href = LIEN_RESIL; });
+
+// secours : sur un poste sans messagerie configuree, mailto: ne fait rien
+$('#btnCopieResil').addEventListener('click', async e => {
+  const btn = e.currentTarget;
+  const texte = 'À : electrosur@verspieren.com\nObjet : ' + SUJET_RESIL + '\n\n' + LETTRE_RESIL;
+  try { await navigator.clipboard.writeText(texte); }
+  catch (_) {
+    const ta = document.createElement('textarea');
+    ta.value = texte; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  }
+  const avant = btn.textContent; btn.textContent = 'Copié ✓';
+  setTimeout(() => btn.textContent = avant, 1600);
 });
 
 /* ===================== THÈME ===================== */
