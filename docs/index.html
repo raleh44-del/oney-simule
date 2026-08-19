@@ -526,7 +526,13 @@ const ICONS = {
   rower:'<svg viewBox="0 0 24 24"><path d="M4 16h16"/><path d="M6 16l6 -4"/><path d="M12 12l6 -3"/><circle cx="6" cy="16" r="1"/></svg>',
   elliptical:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="7" ry="3"/><path d="M6 16v-8"/><path d="M18 16V6"/></svg>',
   hipthrust:'<svg viewBox="0 0 24 24"><path d="M3 19h18"/><path d="M6 19v-3c0-1 1-2 2-2h8c1 0 2 1 2 2v3"/><path d="M5 12h14"/><circle cx="12" cy="8" r="1.6"/></svg>',
-  stair:'<svg viewBox="0 0 24 24"><path d="M3 20h4v-4h4v-4h4v-4h6"/></svg>'
+  stair:'<svg viewBox="0 0 24 24"><path d="M3 20h4v-4h4v-4h4v-4h6"/></svg>',
+  legcurl:'<svg viewBox="0 0 24 24"><path d="M5 8h6v5H5z"/><path d="M11 13c3 0 4 2 4 5"/><circle cx="15" cy="18.5" r="1.4"/></svg>',
+  calf:'<svg viewBox="0 0 24 24"><path d="M6 19h7l-1-4H7z"/><path d="M17.5 18v-8"/><path d="M15 12.5l2.5-2.5l2.5 2.5"/></svg>',
+  adducteurs:'<svg viewBox="0 0 24 24"><path d="M8 5v9"/><path d="M16 5v9"/><path d="M5 18h4"/><path d="M7.5 16.5L9 18l-1.5 1.5"/><path d="M19 18h-4"/><path d="M16.5 16.5L15 18l1.5 1.5"/></svg>',
+  kickback:'<svg viewBox="0 0 24 24"><path d="M7 5v7"/><path d="M7 12h4"/><path d="M11 12l5 4"/><path d="M16 16h3"/><path d="M5 20h5"/></svg>',
+  incline:'<svg viewBox="0 0 24 24"><path d="M4 19l8-9"/><path d="M4 19h6"/><path d="M12 14l4-2"/><path d="M12 10l3-3"/><path d="M15 7h4"/></svg>',
+  lateral:'<svg viewBox="0 0 24 24"><path d="M12 8v9"/><path d="M12 10L6 8"/><path d="M12 10l6-2"/><path d="M6 6v4"/><path d="M18 6v4"/></svg>'
 };
 
 /* ============ GROUPES ============ */
@@ -555,7 +561,13 @@ const CUES = {
   rower:'Pousse avec les jambes puis tire les bras vers le ventre.',
   elliptical:'Mouvement fluide, pousse et tire avec les bras et les jambes.',
   hipthrust:'Pousse les hanches vers le haut en serrant fort les fessiers.',
-  stair:'Monte les marches à rythme régulier — top pour les fessiers.'
+  stair:'Monte les marches à rythme régulier — top pour les fessiers.',
+  legcurl:'Ramène les talons vers les fessiers, contrôle le retour.',
+  calf:'Pousse sur la pointe des pieds, monte haut sur les mollets.',
+  adducteurs:'Resserre les cuisses contre la résistance, contrôle le retour.',
+  kickback:'Pousse la jambe vers l\'arrière, serre le fessier en haut.',
+  incline:'Pousse les poignées vers le haut, cible le haut des pectoraux.',
+  lateral:'Monte les bras sur les côtés jusqu\'aux épaules, contrôle.'
 };
 function cueFor(exo){return exo.cue || CUES[exo.icon] || '';}
 
@@ -578,9 +590,9 @@ const PROGRAMMES = {
       {jour:'Bas du corps',exos:[
         {nom:'Presse à cuisses (leg press)',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:10,key:'legpress'},
         {nom:'Leg extension',icon:'legext',groupe:'jambes',type:'muscu',series:4,reps:12},
-        {nom:'Leg curl',icon:'legext',groupe:'jambes',type:'muscu',series:4,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
+        {nom:'Leg curl',icon:'legcurl',groupe:'jambes',type:'muscu',series:4,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
         {nom:'Abducteurs / Fessiers',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:15},
-        {nom:'Mollets à la presse',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:15,cue:'Pousse sur la pointe des pieds, monte haut sur les mollets.'},
+        {nom:'Mollets à la presse',icon:'calf',groupe:'jambes',type:'muscu',series:4,reps:15,cue:'Pousse sur la pointe des pieds, monte haut sur les mollets.'},
         {nom:'Machine abdos (crunch)',icon:'abs',groupe:'abdos',type:'muscu',series:3,reps:15},
       ]},
       {jour:'Full machines',exos:[
@@ -607,7 +619,7 @@ const PROGRAMMES = {
         {nom:'Rameur',icon:'rower',groupe:'cardio',type:'cardio',duree:8},
         {nom:'Développé épaules machine',icon:'shoulderpress',groupe:'epaules',type:'muscu',series:3,reps:15,key:'shoulder'},
         {nom:'Rowing assis',icon:'row',groupe:'dos',type:'muscu',series:3,reps:15,key:'row'},
-        {nom:'Leg curl',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:15,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
+        {nom:'Leg curl',icon:'legcurl',groupe:'jambes',type:'muscu',series:3,reps:15,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
         {nom:'Elliptique',icon:'elliptical',groupe:'cardio',type:'cardio',duree:12},
         {nom:'Machine abdos',icon:'abs',groupe:'abdos',type:'muscu',series:3,reps:20},
       ]},
@@ -637,15 +649,15 @@ const PROGRAMMES = {
         {nom:'Hip thrust machine',icon:'hipthrust',groupe:'jambes',type:'muscu',series:4,reps:12},
         {nom:'Presse à cuisses (pieds hauts)',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:12,key:'legpress',cue:'Pieds hauts sur la plateforme pour cibler les fessiers.'},
         {nom:'Abducteurs (ouverture)',icon:'glutes',groupe:'jambes',type:'muscu',series:4,reps:15},
-        {nom:'Adducteurs (intérieur cuisse)',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Resserre les cuisses contre la résistance, contrôle le retour.'},
-        {nom:'Leg curl (ischios)',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
-        {nom:'Fessiers à la poulie (kickback)',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Pousse la jambe vers l\'arrière, serre le fessier en haut.'},
+        {nom:'Adducteurs (intérieur cuisse)',icon:'adducteurs',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Resserre les cuisses contre la résistance, contrôle le retour.'},
+        {nom:'Leg curl (ischios)',icon:'legcurl',groupe:'jambes',type:'muscu',series:3,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
+        {nom:'Fessiers à la poulie (kickback)',icon:'kickback',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Pousse la jambe vers l\'arrière, serre le fessier en haut.'},
       ]},
       {jour:'Jambes & abdos',exos:[
         {nom:'Presse à cuisses',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:12,key:'legpress'},
         {nom:'Leg extension (quadriceps)',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:15},
         {nom:'Abducteurs',icon:'glutes',groupe:'jambes',type:'muscu',series:4,reps:15},
-        {nom:'Mollets à la presse',icon:'legpress',groupe:'jambes',type:'muscu',series:3,reps:20,cue:'Pousse sur la pointe des pieds, monte haut sur les mollets.'},
+        {nom:'Mollets à la presse',icon:'calf',groupe:'jambes',type:'muscu',series:3,reps:20,cue:'Pousse sur la pointe des pieds, monte haut sur les mollets.'},
         {nom:'Machine abdos (gainage)',icon:'abs',groupe:'abdos',type:'muscu',series:3,reps:20},
         {nom:'Vélo (récup active)',icon:'bike',groupe:'cardio',type:'cardio',duree:10},
       ]},
@@ -653,7 +665,7 @@ const PROGRAMMES = {
         {nom:'Escalier (stairmaster)',icon:'stair',groupe:'cardio',type:'cardio',duree:15},
         {nom:'Hip thrust machine',icon:'hipthrust',groupe:'jambes',type:'muscu',series:3,reps:15},
         {nom:'Abducteurs',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:20},
-        {nom:'Fessiers à la poulie (kickback)',icon:'glutes',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Pousse la jambe vers l\'arrière, serre le fessier en haut.'},
+        {nom:'Fessiers à la poulie (kickback)',icon:'kickback',groupe:'jambes',type:'muscu',series:3,reps:15,cue:'Pousse la jambe vers l\'arrière, serre le fessier en haut.'},
         {nom:'Vélo',icon:'bike',groupe:'cardio',type:'cardio',duree:10},
       ]},
     ]},
@@ -662,7 +674,7 @@ const PROGRAMMES = {
     days:[
       {jour:'Pecs & bras',exos:[
         {nom:'Chest press',icon:'chestpress',groupe:'pecs',type:'muscu',series:4,reps:8,key:'chest'},
-        {nom:'Développé incliné machine',icon:'chestpress',groupe:'pecs',type:'muscu',series:4,reps:10,key:'chest',cue:'Pousse les poignées vers le haut, cible le haut des pectoraux.'},
+        {nom:'Développé incliné machine',icon:'incline',groupe:'pecs',type:'muscu',series:4,reps:10,key:'chest',cue:'Pousse les poignées vers le haut, cible le haut des pectoraux.'},
         {nom:'Pec deck (butterfly)',icon:'pecdeck',groupe:'pecs',type:'muscu',series:3,reps:12},
         {nom:'Curl biceps machine',icon:'biceps',groupe:'bras',type:'muscu',series:4,reps:12},
         {nom:'Extension triceps (poulie)',icon:'triceps',groupe:'bras',type:'muscu',series:4,reps:12},
@@ -671,12 +683,12 @@ const PROGRAMMES = {
         {nom:'Tirage vertical (lat pulldown)',icon:'latpull',groupe:'dos',type:'muscu',series:4,reps:8,key:'lat'},
         {nom:'Rowing assis (seated row)',icon:'row',groupe:'dos',type:'muscu',series:4,reps:10,key:'row'},
         {nom:'Développé épaules machine',icon:'shoulderpress',groupe:'epaules',type:'muscu',series:4,reps:10,key:'shoulder'},
-        {nom:'Élévations latérales machine',icon:'shoulderpress',groupe:'epaules',type:'muscu',series:3,reps:15,cue:'Monte les bras sur les côtés jusqu\'aux épaules, contrôle.'},
+        {nom:'Élévations latérales machine',icon:'lateral',groupe:'epaules',type:'muscu',series:3,reps:15,cue:'Monte les bras sur les côtés jusqu\'aux épaules, contrôle.'},
         {nom:'Curl biceps machine',icon:'biceps',groupe:'bras',type:'muscu',series:3,reps:12},
       ]},
       {jour:'Jambes & full',exos:[
         {nom:'Presse à cuisses (leg press)',icon:'legpress',groupe:'jambes',type:'muscu',series:4,reps:10,key:'legpress'},
-        {nom:'Leg curl',icon:'legext',groupe:'jambes',type:'muscu',series:3,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
+        {nom:'Leg curl',icon:'legcurl',groupe:'jambes',type:'muscu',series:3,reps:12,key:'legcurl',cue:'Ramène les talons vers les fessiers, contrôle le retour.'},
         {nom:'Chest press',icon:'chestpress',groupe:'pecs',type:'muscu',series:3,reps:10,key:'chest'},
         {nom:'Machine abdos',icon:'abs',groupe:'abdos',type:'muscu',series:3,reps:20},
       ]},
@@ -1866,7 +1878,92 @@ stair:{cam:[2.5,1.6,2.7,1.1],rate:.8,cyclic:true,
     P.fl.copy(foot(0,-1)); P.fr.copy(foot(Math.PI,1));
     P.hips.set(0,1.00+Math.abs(Math.sin(a))*.03,-.02); P.pitch=6;
     P.hl.set(-.42,.98,.24); P.hr.set(.42,.98,.24);
-    P.legPole.set(0,.1,1);}}
+    P.legPole.set(0,.1,1);}},
+
+legcurl:{cam:[2.5,1.25,2.6,.80],rate:.45,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.10)); const st=stackCol(0,-.95,1.0); g.add(st);
+    g.add(box(.40,.09,.28,MAT.pad,0,.72,.28));                 // cale-cuisses
+    const pad=cyl(.075,.34,MAT.pad,0,0,0); pad.rotation.z=Math.PI/2;
+    const lev=rod(.03); g.add(pad); g.add(lev);
+    return{g,up(p){st.userData.plates.position.y=p*.28;
+      vT.copy(P.fl).add(P.fr).multiplyScalar(.5).add(V(0,.02,-.10));
+      pad.position.copy(vT); setRod(lev,V(0,.30,.12),vT);}};},
+  pose(p){sit(-.06);                                           // talons ramenés sous le siège
+    const y=lerp(.52,.16,p), z=lerp(.70,.34,p);
+    P.fl.set(-.17,y,z); P.fr.set(.17,y,z);
+    P.hl.set(-.34,.60,-.16); P.hr.set(.34,.60,-.16);
+    P.footPitch=lerp(-.45,.15,p);}},
+
+calf:{cam:[3.2,1.45,.35,.70],rate:.6,
+  build(){return EX.legpress.build();},                        // même machine que la presse
+  pose(p){stand();P.hips.set(0,.60,-.34);P.pitch=-32;
+    const y=lerp(.84,.96,p), z=lerp(.40,.55,p);                // course courte : tout est dans la cheville
+    P.fl.set(-.19,y,z); P.fr.set(.19,y,z);
+    P.hl.set(-.36,.62,-.20); P.hr.set(.36,.62,-.20);
+    P.legPole.set(0,.2,1); P.footPitch=lerp(-.55,-1.9,p);}},
+
+adducteurs:{cam:[1.7,1.35,3.0,.90],rate:.42,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.06)); const st=stackCol(0,-.95,1.0); g.add(st);
+    const pd=[box(.07,.26,.30,MAT.pad),box(.07,.26,.30,MAT.pad)];
+    const ar=[rod(.026),rod(.026)]; pd.concat(ar).forEach(o=>g.add(o));
+    return{g,up(p){st.userData.plates.position.y=p*.24;
+      const x=lerp(.35,.06,p);                                 // pads à l'intérieur des cuisses
+      pd[0].position.set(-x,.58,.26); pd[1].position.set(x,.58,.26);
+      setRod(ar[0],V(-.34,1.00,-.16),pd[0].position); setRod(ar[1],V(.34,1.00,-.16),pd[1].position);}};},
+  pose(p){sit();
+    const x=lerp(.44,.13,p);                                   // jambes qui se resserrent
+    P.fl.set(-x,.10,.38); P.fr.set(x,.10,.38);
+    P.hl.set(-.32,.62,-.12); P.hr.set(.32,.62,-.12);
+    P.legPole.set(0,-.15,1);}},
+
+kickback:{cam:[3.1,1.40,1.0,.85],rate:.5,
+  build(){const g=new T.Group();
+    const st=stackCol(0,-.75,1.2); g.add(st);
+    g.add(box(.09,1.35,.09,MAT.steel,-.5,.68,-.70)); g.add(box(.09,1.35,.09,MAT.steel,.5,.68,-.70));
+    g.add(box(.90,.07,.07,MAT.steel,0,1.05,.52));              // barre d'appui
+    g.add(box(.07,1.02,.07,MAT.steel,-.42,.52,.52)); g.add(box(.07,1.02,.07,MAT.steel,.42,.52,.52));
+    const cab=rod(.011,MAT.grip); g.add(cab);
+    const strap=cyl(.055,.08,MAT.pad,0,0,0); strap.rotation.z=Math.PI/2; g.add(strap);
+    return{g,up(p){st.userData.plates.position.y=p*.30;
+      strap.position.copy(P.fr).add(V(0,.07,0));
+      setRod(cab,strap.position,V(0,.16,-.70));}};},
+  pose(p){stand();P.pitch=22;P.hips.set(0,.93,.02);
+    P.fl.set(-.17,.075,.10);                                   // jambe d'appui
+    P.fr.set(.20,lerp(.14,.46,p),lerp(.22,-.44,p));            // jambe qui pousse vers l'arrière
+    P.hl.set(-.30,1.00,.50); P.hr.set(.30,1.00,.50);
+    P.legPole.set(0,0,1); P.head=-6;}},
+
+incline:{cam:[2.5,1.45,2.5,1.0],rate:.45,
+  build(){const g=new T.Group();
+    g.add(box(.44,.09,.50,MAT.pad,0,.46,-.02)); g.add(box(.14,.44,.28,MAT.steel,0,.22,-.06));
+    const bk=box(.40,.62,.10,MAT.pad,0,.80,-.34); bk.rotation.x=-.38; g.add(bk);
+    g.add(box(.52,.05,.62,MAT.steel,0,.03,-.06));
+    const st=stackCol(0,-1.0,1.05); g.add(st);
+    g.add(box(.09,1.3,.09,MAT.steel,-.5,.66,-.58)); g.add(box(.09,1.3,.09,MAT.steel,.5,.66,-.58));
+    const ar=[rod(.032),rod(.032)],gr=[grip(),grip()],piv=[V(-.5,.90,-.58),V(.5,.90,-.58)];
+    ar.concat(gr).forEach(o=>g.add(o));
+    return{g,up(p){st.userData.plates.position.y=p*.30;
+      [P.hl,P.hr].forEach((h,i)=>{setRod(ar[i],piv[i],h);gr[i].position.copy(h);});}};},
+  pose(p){sit(-.02);P.hips.set(0,.56,-.02);P.pitch=-24;        // dossier incliné : poussée vers le haut
+    const y=lerp(.98,1.38,p), z=lerp(.04,.20,p), x=lerp(.35,.27,p);
+    P.hl.set(-x,y,z); P.hr.set(x,y,z);
+    P.fl.set(-.17,.075,.34); P.fr.set(.17,.075,.34);
+    P.armPole.set(0,-1,-.35);}},
+
+lateral:{cam:[2.2,1.45,2.7,1.0],rate:.45,
+  build(){const g=new T.Group();
+    g.add(bench(true,.52,-.06)); const st=stackCol(0,-.95,1.0); g.add(st);
+    const pd=[box(.11,.09,.26,MAT.pad),box(.11,.09,.26,MAT.pad)];
+    const ar=[rod(.026),rod(.026)]; pd.concat(ar).forEach(o=>g.add(o));
+    return{g,up(p){st.userData.plates.position.y=p*.26;
+      [P.hl,P.hr].forEach((h,i)=>{pd[i].position.copy(h).add(V(0,.10,0));
+        setRod(ar[i],V((i?1:-1)*.20,1.02,-.28),pd[i].position);});}};},
+  pose(p){sit();                                               // bras qui montent sur les côtés
+    const x=lerp(.30,.60,p), y=lerp(.80,1.30,p);
+    P.hl.set(-x,y,.08); P.hr.set(x,y,.08);
+    P.armPole.set(0,-1,-.25);}}
 };
 
 /* ---------------- moteur ---------------- */
