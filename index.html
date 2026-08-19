@@ -650,7 +650,9 @@ function resultat(capital, valeur, prime, ec, sens){
   return {ok:true, sens:'budget', echeances, moisPrime, moisApres:apres,
           mois:r.mois, derniere:r.derniere,
           mensCredit:mc, mensualite:valeur, interets:r.interets,
-          total: r.mois * valeur + r.derniere + (prime + ec) * apres,
+          // tout ce que le client debourse : le capital, les interets, et la
+          // garantie sur toute sa duree (12 mois au minimum)
+          total: capital + r.interets + (prime + ec) * moisPrime,
           coutMois: r.interets / (r.mois + r.derniere / mc)};
 }
 
