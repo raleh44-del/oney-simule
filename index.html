@@ -190,7 +190,15 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .memo a{color:var(--jaune);text-decoration:none;word-break:break-word}
 .memo ul{margin:0;padding-left:14px}
 .memo li{margin-bottom:3px}
-.memo .tel{font-variant-numeric:tabular-nums;white-space:nowrap}
+.memo .tel{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--txt);
+  font-weight:800;text-decoration:none;border-bottom:1px dotted var(--line2)}
+.btn-mail{
+  display:block;width:100%;margin-top:10px;cursor:pointer;font-family:inherit;
+  background:linear-gradient(145deg,var(--jaune),#ffb300);color:#0b0d12;
+  border:0;border-radius:11px;padding:11px;font-size:12.5px;font-weight:800;
+}
+.btn-mail:active{transform:scale(.985)}
+.btn-note{margin-top:6px;font-size:10px;line-height:1.4;color:var(--faint)}
 .memo .src{margin-top:13px;font-size:9.5px;color:var(--faint);border-top:1px solid var(--line);
   padding-top:8px}
 .forcer{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:9px}
@@ -236,6 +244,9 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .grand span{font-size:16px;font-weight:800;color:var(--muted)}
 .puis{font-size:12.5px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
 .puis b{color:var(--txt)}
+/* Une fois le credit solde, la garantie continue jusqu'a un an d'adhesion. */
+.puis.apres{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2)}
+.puis.apres b{color:var(--jaune)}
 
 .jauge{display:flex;align-items:center;gap:9px;margin:11px 0 12px}
 .piste{flex:1;height:6px;border-radius:999px;background:var(--surf3);overflow:hidden}
@@ -424,7 +435,7 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
       <ul>
         <li><a href="http://sinistre-electrosur.verspieren.com/" target="_blank" rel="noopener">sinistre-electrosur.verspieren.com</a> → « Déclarer votre sinistre »</li>
         <li>Identifiant = l'adresse e-mail donnée à l'adhésion</li>
-        <li>Panne <b class="tel">03 20 45 77 73</b> · Casse mobile <b class="tel">03 28 02 70 49</b><br>du lundi au vendredi, 9 h – 18 h</li>
+        <li>Panne <a class="tel" href="tel:+33320457773">03 20 45 77 73</a> · Casse mobile <a class="tel" href="tel:+33328027049">03 28 02 70 49</a><br>du lundi au vendredi, 9 h – 18 h</li>
         <li>Ou par mail : <a href="mailto:electrosur@verspieren.com">electrosur@verspieren.com</a></li>
       </ul>
 
@@ -434,6 +445,11 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
         <li><b>Renonciation sous 30 jours</b> si le client est déjà couvert ailleurs pour le même risque : sans frais, prime remboursée sous 30 jours.</li>
         <li>Ensuite, résiliation possible <b>à partir de la 1<sup>re</sup> échéance annuelle</b> ; elle prend fin un mois après réception de la demande.</li>
         <li>Demande à <a href="mailto:electrosur@verspieren.com">electrosur@verspieren.com</a></li>
+      </ul>
+      <button type="button" class="btn-mail" id="btnResil">✉&nbsp; Préparer le mail de résiliation</button>
+      <div class="btn-note">Ouvre la messagerie du client avec la lettre déjà écrite. Il n'a plus
+      qu'à compléter ses coordonnées et envoyer.</div>
+      <ul style="display:none">
       </ul>
 
       <h4>Ce que couvre ElectroSûr</h4>
@@ -801,6 +817,12 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille){
       '<div class="alerte-ko">' + msg + '</div></article>';
   }
 
+  // ce qui reste a payer une fois le credit solde : la garantie seule
+  const suite = (r.moisApres && (g.prime || ec))
+    ? '<div class="puis apres">puis <b>' + r.moisApres + ' mois à ' + eur0(g.prime + ec) +
+      '</b> de garantie seule, soit <b>' + eur0((g.prime + ec) * r.moisApres) + '</b></div>'
+    : '';
+
   let grand;
   if (r.sens === 'duree'){
     const detail = [];
@@ -809,12 +831,13 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille){
     grand = '<div class="grand"><b>' + r.echeances + '</b><span>× ' + eur(r.mensualite) + '</span></div>' +
       (detail.length
         ? '<div class="puis">dont crédit <b>' + eur(r.mensCredit) + '</b> + ' + detail.join(' + ') + '</div>'
-        : '');
+        : '') + suite;
   } else if (r.mois > 0){
     grand = '<div class="grand"><b>' + r.mois + '</b><span>× ' + eur0(valeur) + '</span></div>' +
-      (r.derniere >= 0.01 ? '<div class="puis">puis 1 mois à <b>' + eur(r.derniere) + '</b></div>' : '');
+      (r.derniere >= 0.01 ? '<div class="puis">puis 1 mois à <b>' + eur(r.derniere) + '</b></div>' : '') +
+      suite;
   } else {
-    grand = '<div class="grand"><b>1</b><span>× ' + eur(r.derniere) + '</span></div>';
+    grand = '<div class="grand"><b>1</b><span>× ' + eur(r.derniere) + '</span></div>' + suite;
   }
 
   const valJauge = r.sens === 'duree' ? r.mensualite : r.echeances;
@@ -828,9 +851,6 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille){
     ' = <b>' + eur0(g.prime * r.moisPrime) + '</b></em>');
   if (ec) puces.push('<em>EC ' + eur0(ec) + ' × ' + r.moisPrime +
     ' = <b>' + eur0(ec * r.moisPrime) + '</b></em>');
-  if (r.moisApres && (g.prime || ec))
-    puces.push('<em style="color:#ffc400">engagement 1 an : <b>' + r.moisApres + ' mois à ' +
-      eur0(g.prime + ec) + '</b> après la fin du crédit</em>');
   if (base.ok && g.prime){
     puces.push(r.sens === 'duree'
       ? '<em>vs base : <b>+' + eur(r.mensualite - base.mensualite) + '/mois</b> · <b>+' +
@@ -977,6 +997,39 @@ $('#btnCopie').addEventListener('click', async e => {
   }
   const old = btn.textContent; btn.textContent = 'Copié ✓';
   setTimeout(() => btn.textContent = old, 1400);
+});
+
+/* ===================== MAIL DE RÉSILIATION ===================== */
+/*
+  Ouvre la messagerie avec une demande de resiliation deja redigee.
+  Le client n'a plus qu'a completer ses coordonnees et envoyer.
+*/
+$('#btnResil').addEventListener('click', () => {
+  const sujet = 'Résiliation de mon adhésion ElectroSûr';
+  const corps = [
+    'Madame, Monsieur,',
+    '',
+    'Par la présente, je vous demande de résilier mon adhésion au contrat',
+    'd\'assurance ElectroSûr (contrat collectif n° LEKKS2).',
+    '',
+    'Nom et prénom : ',
+    'Adresse : ',
+    'Adresse e-mail utilisée lors de l\'adhésion : ',
+    'Numéro d\'adhésion : ',
+    'Date d\'adhésion : ',
+    '',
+    'Je vous remercie de bien vouloir m\'adresser une confirmation écrite de',
+    'cette résiliation, en précisant la date à laquelle elle prendra effet.',
+    '',
+    'Je vous prie d\'agréer, Madame, Monsieur, l\'expression de mes',
+    'salutations distinguées.',
+    '',
+    '',
+    'Prénom NOM'
+  ].join('\n');
+  window.location.href = 'mailto:electrosur@verspieren.com' +
+    '?subject=' + encodeURIComponent(sujet) +
+    '&body=' + encodeURIComponent(corps);
 });
 
 /* ===================== THÈME ===================== */
