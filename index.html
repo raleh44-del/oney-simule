@@ -857,12 +857,18 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille){
     ' = <b>' + eur0(g.prime * r.moisPrime) + '</b></em>');
   if (ec) puces.push('<em>EC ' + eur0(ec) + ' × ' + r.moisPrime +
     ' = <b>' + eur0(ec * r.moisPrime) + '</b></em>');
+  // Comparaison avec la formule sans option. Le montant est toujours precise :
+  // ce sont des interets en plus, pas le prix de la garantie.
   if (base.ok && g.prime){
-    puces.push(r.sens === 'duree'
-      ? '<em>vs base : <b>+' + eur(r.mensualite - base.mensualite) + '/mois</b> · <b>+' +
-        eur(r.total - base.total) + '</b> au total</em>'
-      : '<em>vs base : <b>+' + (r.echeances - base.echeances) + ' mois</b> · <b>+' +
-        eur(r.interets - base.interets) + '</b></em>');
+    const sans = g.type === 'EC' ? 'sans assurance' : 'sans garantie';
+    if (r.sens === 'duree'){
+      puces.push('<em>vs ' + sans + ' : <b>+' + eur(r.mensualite - base.mensualite) +
+        '/mois</b>, soit <b>+' + eur(r.total - base.total) + '</b> au total</em>');
+    } else {
+      const dm = r.echeances - base.echeances;
+      puces.push('<em>vs ' + sans + ' : <b>+' + eur(r.interets - base.interets) +
+        ' d\'intérêts</b>, ' + (dm === 0 ? 'durée inchangée' : '<b>+' + dm + ' mois</b>') + '</em>');
+    }
   }
   if (r.echeances > 48) puces.push('<em style="color:#ff9ea1">⚠ au-delà du barème habituel</em>');
 
