@@ -170,6 +170,29 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
   border-radius:14px;padding:11px 13px;font-size:12.5px;color:var(--muted);line-height:1.45;
 }
 .info b{color:var(--txt)}
+
+/* ===================== MEMO : RESILIATION ET INFOS UTILES ===================== */
+.infos{background:var(--surf);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--ombre);overflow:hidden}
+.infos summary{
+  list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;
+  gap:8px;font-size:12.5px;font-weight:800;color:var(--txt);
+}
+.infos summary::-webkit-details-marker{display:none}
+.infos summary::after{content:'▾';margin-left:auto;color:var(--muted);font-size:11px;transition:.2s}
+.infos[open] summary::after{transform:rotate(180deg)}
+.infos summary i{width:6px;height:6px;border-radius:50%;background:var(--jaune);flex:0 0 auto}
+.memo{padding:2px 14px 14px;font-size:11.3px;line-height:1.55;color:var(--muted)}
+.memo h4{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--jaune);
+  margin:13px 0 4px;font-weight:800}
+.memo h4:first-child{margin-top:4px}
+.memo b{color:var(--txt);font-weight:800}
+.memo a{color:var(--jaune);text-decoration:none;word-break:break-word}
+.memo ul{margin:0;padding-left:14px}
+.memo li{margin-bottom:3px}
+.memo .tel{font-variant-numeric:tabular-nums;white-space:nowrap}
+.memo .src{margin-top:13px;font-size:9.5px;color:var(--faint);border-top:1px solid var(--line);
+  padding-top:8px}
 .forcer{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:9px}
 .forcer span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
   margin-right:2px}
@@ -431,6 +454,58 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   <!-- Colonne de saisie : empilee sur telephone, panneau lateral sur poste fixe -->
   <div class="cote">
 
+  <!-- MEMO -->
+  <details class="infos">
+    <summary><i></i>Résiliation et infos utiles</summary>
+    <div class="memo">
+
+      <h4>Déclarer un sinistre</h4>
+      <ul>
+        <li><a href="http://sinistre-electrosur.verspieren.com/" target="_blank" rel="noopener">sinistre-electrosur.verspieren.com</a> → « Déclarer votre sinistre »</li>
+        <li>Identifiant = l'adresse e-mail donnée à l'adhésion</li>
+        <li>Panne <b class="tel">03 20 45 77 73</b> · Casse mobile <b class="tel">03 28 02 70 49</b><br>du lundi au vendredi, 9 h – 18 h</li>
+        <li>Ou par mail : <a href="mailto:electrosur@verspieren.com">electrosur@verspieren.com</a></li>
+      </ul>
+
+      <h4>Résiliation</h4>
+      <ul>
+        <li>L'adhésion est conclue pour <b>un an</b>, puis reconduite tacitement par périodes d'un an.</li>
+        <li><b>Renonciation sous 30 jours</b> si le client est déjà couvert ailleurs pour le même risque : sans frais, prime remboursée sous 30 jours.</li>
+        <li>Ensuite, résiliation possible <b>à partir de la 1<sup>re</sup> échéance annuelle</b> ; elle prend fin un mois après réception de la demande.</li>
+        <li>Demande à <a href="mailto:electrosur@verspieren.com">electrosur@verspieren.com</a></li>
+      </ul>
+
+      <h4>Ce que couvre ElectroSûr</h4>
+      <ul>
+        <li>La <b>panne</b>, au-delà de la garantie légale (2 ans) et commerciale : réparation prise en charge, pièces et main-d'œuvre.</li>
+        <li>Si l'appareil n'est pas réparable : <b>bon d'achat</b> à la valeur d'achat constatée le jour de l'indemnisation pour le même appareil, ou un équivalent s'il n'est plus commercialisé.</li>
+        <li>Appareils <b>neufs ou reconditionnés de moins de 3 ans</b> à l'adhésion, achetés chez Electro Dépôt <b>ou ailleurs</b> (facture nominative exigée hors Electro Dépôt).</li>
+        <li>Couverts <b>à vie</b> tant que l'adhésion est active.</li>
+      </ul>
+
+      <h4>Formules</h4>
+      <ul>
+        <li>Simple <b>6 €</b> · Double <b>11 €</b> · Triple <b>15 €</b> par mois</li>
+        <li>1, 2 ou 3 univers au choix : électroménager · image et son · multimédia</li>
+      </ul>
+
+      <h4>Assurance mobile</h4>
+      <ul>
+        <li>Casse, vol, oxydation — <b>2 / 4 / 7 / 10 €</b> selon le prix du mobile.</li>
+        <li>À souscrire dans un délai de <b>7 jours</b> à partir de la date d'achat.</li>
+      </ul>
+
+      <h4>Le contrat</h4>
+      <ul>
+        <li>Contrat collectif <b>n° LEKKS2</b> — assureur <b>SEYNA</b>, courtier <b>COFIDIS</b>, gestion <b>VERSPIEREN</b>, distribution Electro Dépôt.</li>
+        <li>Réclamation : <a href="mailto:reclamationdpas@verspieren.com">reclamationdpas@verspieren.com</a>, puis <a href="mailto:reclamations@seyna.eu">reclamations@seyna.eu</a>, puis <a href="https://www.mediation-assurance.org" target="_blank" rel="noopener">mediation-assurance.org</a>.</li>
+      </ul>
+
+      <div class="src">Source : electrodepot.fr/electrosur. Se reporter à la notice d'information
+      pour l'ensemble des garanties, limites et exclusions.</div>
+    </div>
+  </details>
+
   <!-- MODE -->
   <div class="seg" id="modes">
     <button class="on" data-mode="es" type="button">Garanties ES<span>base · XL · 2XL · 3XL</span></button>
@@ -520,12 +595,20 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
 const TAEG = 0.2050;                                  // CRÉDIT ROND
 const TAUX_MENSUEL = Math.pow(1 + TAEG, 1/12) - 1;    // ≈ 1,5661 % / mois
 
+/*
+  L'adhesion ElectroSur est conclue pour une duree d'un an, reconduite ensuite
+  tacitement (source : electrodepot.fr/electrosur). Sur un financement plus
+  court, la prime continue donc a courir apres la fin du credit : elle est
+  toujours comptee sur douze mois au minimum.
+*/
+const ENGAGEMENT = 12;
+
 /* Garanties ES : prime mensuelle prélevée sur le budget */
 const ES = [
   {type:'ES', nom:'GARANTIE DE BASE', sous:'garantie légale',   prime:0,  col:'#9aa7b8'},
-  {type:'ES', nom:'ELECTROSÛR XL',    sous:'1 univers produit', prime:6,  col:'#ffc400'},
-  {type:'ES', nom:'ELECTROSÛR 2XL',   sous:'2 univers',         prime:11, col:'#63b3ed'},
-  {type:'ES', nom:'ELECTROSÛR 3XL',   sous:'3 univers',         prime:15, col:'#37c98a'}
+  {type:'ES', nom:'ELECTROSÛR XL',    sous:'formule Simple · 1 univers', prime:6,  col:'#ffc400'},
+  {type:'ES', nom:'ELECTROSÛR 2XL',   sous:'formule Double · 2 univers',  prime:11, col:'#63b3ed'},
+  {type:'ES', nom:'ELECTROSÛR 3XL',   sous:'formule Triple · 3 univers',  prime:15, col:'#37c98a'}
 ];
 
 /* Assurance mobile EC : prime mensuelle prélevée sur le budget */
@@ -590,17 +673,22 @@ function resultat(capital, valeur, prime, ec, sens){
     if (N > 600)        return {ok:false, motif:'trop_long'};
     const mc = mensualitePourDuree(capital, N);
     const interets = mc * N - capital;
-    return {ok:true, sens:'duree', echeances:N, moisPrime:N,
+    const moisPrime = Math.max(N, ENGAGEMENT);
+    const apres = moisPrime - N;                     // primes dues apres le credit
+    return {ok:true, sens:'duree', echeances:N, moisPrime, moisApres:apres,
             mensCredit:mc, mensualite: mc + prime + ec, interets,
-            total:(mc + prime + ec) * N, coutMois: interets / N};
+            total:(mc + prime + ec) * N + (prime + ec) * apres, coutMois: interets / N};
   }
   const mc = valeur - prime - ec;
   const r = simuler(capital, mc);
   if (!r.ok) return r;
-  return {ok:true, sens:'budget', echeances: r.mois + (r.derniere >= 0.01 ? 1 : 0),
-          moisPrime:r.mois, mois:r.mois, derniere:r.derniere,
+  const echeances = r.mois + (r.derniere >= 0.01 ? 1 : 0);
+  const moisPrime = Math.max(echeances, ENGAGEMENT);
+  const apres = moisPrime - echeances;               // primes dues apres le credit
+  return {ok:true, sens:'budget', echeances, moisPrime, moisApres:apres,
+          mois:r.mois, derniere:r.derniere,
           mensCredit:mc, mensualite:valeur, interets:r.interets,
-          total: r.mois * valeur + r.derniere,
+          total: r.mois * valeur + r.derniere + (prime + ec) * apres,
           coutMois: r.interets / (r.mois + r.derniere / mc)};
 }
 
@@ -777,6 +865,9 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille, reference){
     ' = <b>' + eur0(g.prime * r.moisPrime) + '</b></em>');
   if (ec) puces.push('<em>EC ' + eur0(ec) + ' × ' + r.moisPrime +
     ' = <b>' + eur0(ec * r.moisPrime) + '</b></em>');
+  if (r.moisApres && (g.prime || ec))
+    puces.push('<em style="color:#ffc400">engagement 1 an : <b>' + r.moisApres +
+      ' mois</b> de prime après la fin du crédit</em>');
   if (base.ok && g.prime){
     puces.push(r.sens === 'duree'
       ? '<em>vs base : <b>+' + eur(r.mensualite - base.mensualite) + '/mois</b> · <b>+' +
@@ -815,9 +906,12 @@ function texteSimu(){
     if (!r.ok){ t += '  Budget insuffisant\n\n'; return; }
     t += r.sens === 'duree'
       ? '  ' + r.echeances + ' mois à ' + eur(r.mensualite) +
-        ' (dont crédit ' + eur(r.mensCredit) + ')\n  Coût du crédit : ' + eur(r.interets) + '\n\n'
+        ' (dont crédit ' + eur(r.mensCredit) + ')\n  Coût du crédit : ' + eur(r.interets) + '\n'
       : '  ' + (r.mois ? r.mois + ' mois à ' + eur0(valeur) + ' + ' : '') +
-        '1 mois à ' + eur(r.derniere) + '\n  Coût du crédit : ' + eur(r.interets) + '\n\n';
+        '1 mois à ' + eur(r.derniere) + '\n  Coût du crédit : ' + eur(r.interets) + '\n';
+    if (r.moisApres && g.prime)
+      t += '  Engagement 1 an : ' + r.moisApres + ' mois de prime après la fin du crédit\n';
+    t += '\n';
   });
   return t;
 }
