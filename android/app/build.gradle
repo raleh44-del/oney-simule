@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.delrobi.app'
+    namespace 'com.simuoney.app'
     compileSdk 34
 
     defaultConfig {
-        applicationId 'com.delrobi.app'
+        applicationId 'com.simuoney.app'
         minSdk 26
         targetSdk 34
         versionCode 1
@@ -26,10 +26,10 @@ android {
     }
 }
 
-// Copie automatiquement l'app web (app-muscu.html) dans les assets avant chaque build.
-// Source unique : le fichier reste à la racine du dépôt.
+// Copie automatiquement l'app web dans les assets avant chaque build.
+// Source unique : docs/oney/index.html, le meme fichier que la version en ligne.
 tasks.register('syncWebApp', Copy) {
-    from file("${rootProject.projectDir}/../app-muscu.html")
+    from file("${rootProject.projectDir}/../index.html")
     into file("${projectDir}/src/main/assets")
     rename { 'index.html' }
 }
