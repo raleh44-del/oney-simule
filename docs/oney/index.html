@@ -242,6 +242,24 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
 @media (min-width:640px){
   body{max-width:820px}
   #resultats{display:grid;grid-template-columns:repeat(2,1fr);align-items:start}
+
+  /* La garantie de base / le « sans assurance » n'est pas une option a vendre :
+     c'est la reference. Sur grand ecran elle devient un bandeau pleine largeur
+     et laisse les colonnes aux seules options payantes. */
+  .opt.ref{
+    grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;
+    gap:8px 22px;padding:11px 16px;
+  }
+  .opt.ref .tete{margin-bottom:0;min-height:0;flex:0 0 200px;align-items:center}
+  .opt.ref .prime,.opt.ref .jauge,.opt.ref .bas{display:none}
+  .opt.ref .grand,.opt.ref .puis{flex:0 0 auto;margin-top:0}
+  .opt.ref .grand b{font-size:26px}
+  .opt.ref .kpi{
+    flex:1;min-width:300px;display:grid;grid-template-columns:repeat(3,1fr);
+    border-top:0;padding-top:0;
+  }
+  .opt.ref .kpi div{display:block}
+  .opt.ref .kpi b{margin-top:3px}
 }
 
 /* ===================== BUREAU (poste de caisse) =====================
@@ -262,9 +280,9 @@ footer{padding:16px 18px 4px;font-size:10.5px;color:var(--faint);line-height:1.5
   main.solo #carteSaisie{grid-column:1/-1}
   main.solo .duo{max-width:640px}
 
-  /* une colonne par option */
+  /* une colonne par option payante : 3 en mode ES, 4 en mode EC */
+  #resultats.n3{grid-template-columns:repeat(3,1fr)}
   #resultats.n4{grid-template-columns:repeat(4,1fr)}
-  #resultats.n5{grid-template-columns:repeat(5,1fr)}
 
   /* colonnes etroites : les indicateurs passent en liste */
   .kpi{grid-template-columns:1fr;gap:5px}
@@ -599,15 +617,16 @@ function calculer(){
   const maxJauge = Math.max(1, ...calculs.filter(c => c.r.ok).map(c => jaugeVal(c.r)));
   const base = calculs[0].r;
 
-  // le nombre de cartes pilote la grille en version bureau
-  eRes.className = 'n' + liste.length;
+  // la 1re option (sans prime) sert de reference : en version bureau elle
+  // passe en bandeau pleine largeur, seules les options payantes font colonne
+  eRes.className = 'n' + (liste.length - 1);
   document.querySelector('main').classList.toggle('solo', mode !== 'es');
 
-  eRes.innerHTML = calculs.map(c =>
-    carte(c.g, c.r, valeur, ec, maxJauge, base, c.g.prime === conseille)).join('');
+  eRes.innerHTML = calculs.map((c, i) =>
+    carte(c.g, c.r, valeur, ec, maxJauge, base, c.g.prime === conseille, i === 0)).join('');
 }
 
-function carte(g, r, valeur, ec, maxJauge, base, conseille){
+function carte(g, r, valeur, ec, maxJauge, base, conseille, reference){
   const tete =
     '<div class="tete">' +
       '<div><div class="nom"><span class="pastille"></span>' + g.nom +
@@ -626,7 +645,7 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille){
       duree:    'Durée invalide.',
       vide:     'Montant invalide.'
     }[r.motif];
-    return '<article class="opt ko" style="--opt:' + g.col + '">' + tete +
+    return '<article class="opt ko' + (reference ? ' ref' : '') + '" style="--opt:' + g.col + '">' + tete +
       '<div class="alerte-ko">' + msg + '</div></article>';
   }
 
@@ -666,7 +685,8 @@ function carte(g, r, valeur, ec, maxJauge, base, conseille){
   }
   if (r.echeances > 48) puces.push('<em style="color:#ff9ea1">⚠ au-delà du barème habituel</em>');
 
-  return '<article class="opt' + (conseille ? ' top' : '') + '" style="--opt:' + g.col + '">' +
+  return '<article class="opt' + (conseille ? ' top' : '') + (reference ? ' ref' : '') +
+    '" style="--opt:' + g.col + '">' +
     tete + grand + jauge +
     '<div class="kpi">' +
       '<div><span>Coût du crédit</span><b>' + eur(r.interets) + '</b></div>' +
