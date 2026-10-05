@@ -96,6 +96,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var treelyState: TextView
     private lateinit var openTreely: Button
     private lateinit var openFit: Button
+    private lateinit var appAccess: Button
+
+    // Appli qui doit lire les pas dans Sante Connect : Treely, ou Google Fit quand Treely passe par lui
+    private var reader = TREELY_PACKAGE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -116,6 +120,7 @@ class MainActivity : ComponentActivity() {
         treelyState = findViewById(R.id.treelyState)
         openTreely = findViewById(R.id.openTreely)
         openFit = findViewById(R.id.openFit)
+        appAccess = findViewById(R.id.treelyAccess)
 
         findViewById<Button>(R.id.quick2k).setOnClickListener { steps.setText("2000") }
         findViewById<Button>(R.id.quick5k).setOnClickListener { steps.setText("5000") }
@@ -133,7 +138,7 @@ class MainActivity : ComponentActivity() {
         add.setOnClickListener { addWalk() }
         liveToggle.setOnClickListener { if (liveJob == null) startLive() else stopLive() }
         findViewById<Button>(R.id.openHc).setOnClickListener { openHealthConnect() }
-        findViewById<Button>(R.id.treelyAccess).setOnClickListener { openTreelyAccess() }
+        appAccess.setOnClickListener { openAccess(reader) }
         openTreely.setOnClickListener { openApp(TREELY_PACKAGE) }
         openFit.setOnClickListener { openApp(FIT_PACKAGE) }
         findViewById<Button>(R.id.clear).setOnClickListener { confirmClear() }
@@ -484,10 +489,14 @@ class MainActivity : ComponentActivity() {
             }
         }
         treelyState.text = lines.joinToString("\n")
-        treelyState.setTextColor(getColor(if (ok) R.color.green else R.color.error))
+        treelyState.setTextColor(getColor(if (ok) R.color.accent else R.color.error))
         openTreely.text = if (treely.installed) "Ouvrir Treely" else "Installer Treely"
         openFit.text = if (fit.installed) "Ouvrir Google Fit" else "Installer Google Fit"
+        reader = if (treely.installed && !treely.readsHealthConnect) FIT_PACKAGE else TREELY_PACKAGE
+        appAccess.text = "Accès de ${appName(reader)} dans Santé Connect"
     }
+
+    private fun appName(pkg: String) = if (pkg == FIT_PACKAGE) "Google Fit" else "Treely"
 
     /**
      * Lit les autorisations declarees par une autre appli. Depuis Android 14, Android sait aussi
@@ -516,13 +525,13 @@ class MainActivity : ComponentActivity() {
         if (launch != null) startActivity(launch) else openStore(pkg)
     }
 
-    /** Ecran des autorisations Sante Connect de Treely, ou l'accueil de Sante Connect a defaut. */
-    private fun openTreelyAccess() {
+    /** Ecran des autorisations Sante Connect d'une appli, ou l'accueil de Sante Connect a defaut. */
+    private fun openAccess(pkg: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             try {
                 startActivity(
                     Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS")
-                        .putExtra(Intent.EXTRA_PACKAGE_NAME, TREELY_PACKAGE)
+                        .putExtra(Intent.EXTRA_PACKAGE_NAME, pkg)
                 )
                 return
             } catch (e: ActivityNotFoundException) {
@@ -531,7 +540,7 @@ class MainActivity : ComponentActivity() {
                 // idem
             }
         }
-        toast("Dans Santé Connect, ouvre Autorisations des applis › Treely et autorise Pas.")
+        toast("Dans Santé Connect, ouvre Autorisations des applis › ${appName(pkg)} et autorise Pas.")
         openHealthConnect()
     }
 
