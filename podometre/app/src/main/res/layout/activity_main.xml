@@ -185,7 +185,7 @@
 
                 <TextView
                     style="@style/Label"
-                    android:text="1. Dans Treely, la source des pas doit être Santé Connect (ou Google Fit).\n2. Dans Santé Connect, Treely doit avoir le droit de lire les Pas.\n3. Dans Santé Connect › Données et accès › Activité › Pas › Sources de données, place Podomètre en premier. Sinon, sur les mêmes heures, ce sont les pas réels du téléphone qui comptent.\n4. Si Treely passe par Google Fit : Google Fit › Profil › Paramètres › active « Synchroniser Fit avec Santé Connect ».\n5. Test : ajoute 200 pas ici, puis ouvre Treely pour qu\'il se synchronise." />
+                    android:text="Test : ajoute 200 pas, puis ouvre Treely (ou Google Fit puis Treely si la liste le dit). En revenant ici, la liste se met à jour.\nSi le total du jour ne monte pas d\'autant que les pas ajoutés, mets Podomètre en premier dans la priorité des sources." />
 
                 <Button
                     android:id="@+id/openTreely"
