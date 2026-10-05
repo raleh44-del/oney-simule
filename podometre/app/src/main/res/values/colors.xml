@@ -7,4 +7,5 @@
     <color name="text">#161B26</color>
     <color name="muted">#5B6475</color>
     <color name="error">#B3261E</color>
+    <color name="warn">#A35C00</color>
 </resources>

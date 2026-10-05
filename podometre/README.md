@@ -8,6 +8,12 @@ remonter dans **Treely** (Treely for Teams).
 
 ## Ce qu'elle fait
 
+- **Diagnostic** (se lance tout seul à l'ouverture) : vérifie Santé Connect,
+  les autorisations, écrit 300 pas de test pour voir s'ils comptent dans le total
+  (priorité des sources) puis les efface, liste les sources de pas du jour, et
+  regarde par où Treely lit ses pas (Santé Connect ou Google Fit) et si l'accès
+  est accordé. Le maillon Google Fit → Treely ne peut pas être vu depuis le
+  téléphone : à vérifier en ouvrant Google Fit.
 - **Ajouter une marche** : un nombre de pas, une durée (auto ≈ 105 pas/min si
   vide) et l'heure de fin. Les pas sont écrits minute par minute avec une cadence
   qui varie un peu, marqués « enregistrés automatiquement » par le téléphone.

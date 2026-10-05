@@ -3,27 +3,24 @@ package com.podometre.simule
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
-import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.metadata.DataOrigin
-import androidx.health.connect.client.records.metadata.Device
-import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -38,7 +35,6 @@ import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.time.Duration
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -52,32 +48,19 @@ class MainActivity : ComponentActivity() {
 
     private class Plan(val steps: Long, val minutes: Long, val endAgo: Long)
 
-    /** Ce qu'on peut savoir d'une autre appli : installee, et si elle lit les pas de Sante Connect. */
-    private class AppSteps(val installed: Boolean, val version: String?, val readsHealthConnect: Boolean, val allowed: Boolean?)
-
-    private val permissions = setOf(
-        HealthPermission.getWritePermission(StepsRecord::class),
-        HealthPermission.getReadPermission(StepsRecord::class),
-    )
-
     private val askPermissions =
         registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
             // Apres deux refus, Android n'affiche plus la demande : il faut passer par les reglages
-            if (!granted.containsAll(permissions)) {
+            if (!granted.containsAll(STEPS_PERMISSIONS)) {
                 toast("Autorisation refusée. Active-la dans Santé Connect › Autorisations des applis › Podomètre.")
             }
             refresh()
+            runDiagnostic(force = true)
         }
 
     private var client: HealthConnectClient? = null
     private var liveJob: Job? = null
 
-    // Les pas sont declares comme enregistres automatiquement par ce telephone
-    private val phone = Device(
-        type = Device.TYPE_PHONE,
-        manufacturer = Build.MANUFACTURER,
-        model = Build.MODEL,
-    )
     private val numbers = NumberFormat.getIntegerInstance(Locale.FRANCE)
     private val clock = DateTimeFormatter.ofPattern("HH:mm")
 
@@ -93,7 +76,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var add: Button
     private lateinit var live: TextView
     private lateinit var liveToggle: Button
-    private lateinit var treelyState: TextView
+    private lateinit var diagVerdict: TextView
+    private lateinit var diagList: LinearLayout
+    private var diagJob: Job? = null
+    private var lastDiag = 0L
     private lateinit var openTreely: Button
     private lateinit var openFit: Button
     private lateinit var appAccess: Button
@@ -117,7 +103,8 @@ class MainActivity : ComponentActivity() {
         add = findViewById(R.id.add)
         live = findViewById(R.id.live)
         liveToggle = findViewById(R.id.liveToggle)
-        treelyState = findViewById(R.id.treelyState)
+        diagVerdict = findViewById(R.id.diagVerdict)
+        diagList = findViewById(R.id.diagList)
         openTreely = findViewById(R.id.openTreely)
         openFit = findViewById(R.id.openFit)
         appAccess = findViewById(R.id.treelyAccess)
@@ -136,6 +123,7 @@ class MainActivity : ComponentActivity() {
         endAgo.addTextChangedListener(watcher)
 
         add.setOnClickListener { addWalk() }
+        findViewById<Button>(R.id.diagRun).setOnClickListener { runDiagnostic(force = true) }
         liveToggle.setOnClickListener { if (liveJob == null) startLive() else stopLive() }
         findViewById<Button>(R.id.openHc).setOnClickListener { openHealthConnect() }
         appAccess.setOnClickListener { openAccess(reader) }
@@ -149,6 +137,40 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         refresh()
+        runDiagnostic()
+    }
+
+    // ---- Diagnostic automatique ----
+
+    private fun runDiagnostic(force: Boolean = false) {
+        if (diagJob?.isActive == true) return
+        val now = SystemClock.elapsedRealtime()
+        if (!force && lastDiag != 0L && now - lastDiag < DIAG_PAUSE_MS) return
+        lastDiag = now
+        diagVerdict.text = "Test en cours…"
+        diagVerdict.setTextColor(getColor(R.color.muted))
+        diagList.removeAllViews()
+        diagJob = lifecycleScope.launch {
+            val result = Diagnostic(this@MainActivity).run()
+            val pad = (6 * resources.displayMetrics.density).toInt()
+            for (check in result.checks) {
+                val color = when (check.status) {
+                    Diagnostic.Status.OK -> R.color.accent
+                    Diagnostic.Status.FAIL -> R.color.error
+                    Diagnostic.Status.UNKNOWN -> R.color.warn
+                    Diagnostic.Status.INFO -> R.color.muted
+                }
+                diagList.addView(TextView(this@MainActivity).apply {
+                    text = "${check.status.symbol}  ${check.text}"
+                    textSize = 14f
+                    setTextColor(getColor(color))
+                    setPadding(0, pad, 0, 0)
+                })
+            }
+            diagVerdict.text = result.verdict
+            diagVerdict.setTextColor(getColor(if (result.working) R.color.accent else R.color.error))
+            client?.let { refreshTotals(it) }
+        }
     }
 
     // ---- Etat de Health Connect ----
@@ -175,9 +197,9 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 emptySet<String>()
             }
-            if (!granted.containsAll(permissions)) {
+            if (!granted.containsAll(STEPS_PERMISSIONS)) {
                 show(false, "Autorise Podomètre à lire et écrire les pas dans Santé Connect.", "Autoriser") {
-                    askPermissions.launch(permissions)
+                    askPermissions.launch(STEPS_PERMISSIONS)
                 }
                 return@launch
             }
@@ -294,7 +316,7 @@ class MainActivity : ComponentActivity() {
                             "(champ « terminée il y a »)."
                     )
                 }
-                val treely = appSteps(TREELY_PACKAGE)
+                val treely = appSteps(packageManager, TREELY_PACKAGE)
                 val dialog = AlertDialog.Builder(this@MainActivity)
                     .setTitle("Pas ajoutés")
                     .setNegativeButton("OK", null)
@@ -452,44 +474,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun refreshTreely() {
-        val treely = appSteps(TREELY_PACKAGE)
-        val fit = appSteps(FIT_PACKAGE)
-        val lines = mutableListOf<String>()
-        var ok = true
-        fun check(good: Boolean?, text: String) {
-            lines += (if (good == true) "✓ " else if (good == false) "✗ " else "? ") + text
-            if (good == false) ok = false
-        }
-
-        if (!treely.installed) {
-            check(false, "Treely n'est pas installé sur ce téléphone.")
-        } else {
-            check(true, "Treely installé" + (treely.version?.let { " (version $it)" } ?: ""))
-            if (treely.readsHealthConnect) {
-                check(true, "Treely sait lire les pas de Santé Connect.")
-                when (treely.allowed) {
-                    true -> check(true, "Treely a le droit de lire les pas.")
-                    false -> check(false, "Treely n'a pas le droit de lire les pas : bouton « Accès de Treely » ci-dessous, active Pas.")
-                    null -> check(null, "Vérifie dans Santé Connect que Treely peut lire les Pas.")
-                }
-                lines += "Dans Treely, choisis Santé Connect comme source des pas si on te le demande."
-            } else {
-                check(false, "Cette version de Treely ne lit pas Santé Connect : elle prend les pas dans Google Fit.")
-                if (!fit.installed) {
-                    check(false, "Google Fit n'est pas installé : installe-le, connecte ton compte Google et relie-le à Treely.")
-                } else {
-                    check(true, "Google Fit installé.")
-                    when (fit.allowed) {
-                        true -> check(true, "Google Fit lit les pas de Santé Connect.")
-                        false -> check(false, "Google Fit ne lit pas Santé Connect : Google Fit › Profil › Paramètres › Synchroniser Fit avec Santé Connect.")
-                        null -> check(null, "Vérifie dans Google Fit › Profil › Paramètres que la synchronisation avec Santé Connect est activée.")
-                    }
-                    lines += "Après un ajout, ouvre Google Fit : si son total monte, Treely suivra à sa prochaine synchro."
-                }
-            }
-        }
-        treelyState.text = lines.joinToString("\n")
-        treelyState.setTextColor(getColor(if (ok) R.color.accent else R.color.error))
+        val treely = appSteps(packageManager, TREELY_PACKAGE)
+        val fit = appSteps(packageManager, FIT_PACKAGE)
         openTreely.text = if (treely.installed) "Ouvrir Treely" else "Installer Treely"
         openFit.text = if (fit.installed) "Ouvrir Google Fit" else "Installer Google Fit"
         reader = if (treely.installed && !treely.readsHealthConnect) FIT_PACKAGE else TREELY_PACKAGE
@@ -497,27 +483,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun appName(pkg: String) = if (pkg == FIT_PACKAGE) "Google Fit" else "Treely"
-
-    /**
-     * Lit les autorisations declarees par une autre appli. Depuis Android 14, Android sait aussi
-     * si l'autorisation de lire les pas lui a ete accordee ; avant, c'est Sante Connect qui le garde.
-     */
-    private fun appSteps(pkg: String): AppSteps {
-        val info: PackageInfo = try {
-            @Suppress("DEPRECATION")
-            packageManager.getPackageInfo(pkg, PackageManager.GET_PERMISSIONS)
-        } catch (e: PackageManager.NameNotFoundException) {
-            return AppSteps(installed = false, version = null, readsHealthConnect = false, allowed = null)
-        }
-        val index = info.requestedPermissions?.indexOf(READ_STEPS) ?: -1
-        val allowed = if (index >= 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            val flags = info.requestedPermissionsFlags?.getOrNull(index) ?: 0
-            (flags and PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0
-        } else {
-            null
-        }
-        return AppSteps(installed = true, version = info.versionName, readsHealthConnect = index >= 0, allowed = allowed)
-    }
 
     /** Lance l'appli, ou sa page Play Store si elle n'est pas installee. */
     private fun openApp(pkg: String) {
@@ -558,23 +523,6 @@ class MainActivity : ComponentActivity() {
 
     // ---- Outils ----
 
-    private fun stepsRecord(from: Instant, to: Instant, count: Long): StepsRecord {
-        val rules = ZoneId.systemDefault().rules
-        return StepsRecord(
-            startTime = from,
-            startZoneOffset = rules.getOffset(from),
-            endTime = to,
-            endZoneOffset = rules.getOffset(to),
-            count = count,
-            metadata = Metadata.autoRecorded(phone),
-        )
-    }
-
-    private fun startOfToday(): Instant {
-        val zone = ZoneId.systemDefault()
-        return LocalDate.now(zone).atStartOfDay(zone).toInstant()
-    }
-
     private fun number(field: EditText): Long? = field.text.toString().trim().toLongOrNull()
 
     private fun fmt(n: Long): String = numbers.format(n)
@@ -585,10 +533,6 @@ class MainActivity : ComponentActivity() {
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
     private companion object {
-        const val HC_PACKAGE = "com.google.android.apps.healthdata"
-        const val TREELY_PACKAGE = "com.treely.android"
-        const val FIT_PACKAGE = "com.google.android.apps.fitness"
-        const val READ_STEPS = "android.permission.health.READ_STEPS"
         const val MAX_STEPS = 60_000L
         const val MAX_MINUTES = 720L
         const val MAX_AGO = 1440L
@@ -597,5 +541,6 @@ class MainActivity : ComponentActivity() {
         const val LIVE_CADENCE = 110.0
         const val LIVE_FLUSH_SECONDS = 30L
         const val INSERT_BATCH = 200
+        const val DIAG_PAUSE_MS = 15_000L
     }
 }

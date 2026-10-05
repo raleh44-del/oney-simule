@@ -35,6 +35,35 @@
             style="@style/Primary"
             android:visibility="gone" />
 
+        <!-- Diagnostic : se lance tout seul a l'ouverture -->
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                style="@style/CardTitle"
+                android:text="Diagnostic" />
+
+            <TextView
+                android:id="@+id/diagVerdict"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/diagList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="vertical" />
+
+            <Button
+                android:id="@+id/diagRun"
+                style="@style/Secondary"
+                android:layout_marginTop="6dp"
+                android:text="Relancer le test" />
+        </LinearLayout>
+
         <LinearLayout
             android:id="@+id/ready"
             android:layout_width="match_parent"
@@ -174,14 +203,6 @@
                 <TextView
                     style="@style/CardTitle"
                     android:text="Faire monter les pas sur Treely" />
-
-                <TextView
-                    android:id="@+id/treelyState"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
 
                 <TextView
                     style="@style/Label"
