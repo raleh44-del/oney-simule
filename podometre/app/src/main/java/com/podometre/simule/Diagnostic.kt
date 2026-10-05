@@ -295,20 +295,28 @@ internal class Diagnostic(private val context: Context) {
             )
         )[StepsRecord.COUNT_TOTAL] ?: 0L
 
-    private fun label(pkg: String): String = when (pkg) {
-        context.packageName -> "Podomètre"
-        TREELY_PACKAGE -> "Treely"
-        FIT_PACKAGE -> "Google Fit"
-        HC_PACKAGE, "com.android.healthconnect.controller", "android" -> "le téléphone"
-        "com.sec.android.app.shealth" -> "Samsung Health"
-        "com.huawei.health" -> "Huawei Santé"
-        "com.fitbit.FitbitMobile" -> "Fitbit"
-        "com.garmin.android.apps.connectmobile" -> "Garmin Connect"
-        "com.xiaomi.wearable", "com.mi.health" -> "Mi Fitness"
-        else -> pkg
+    private fun label(pkg: String): String = when {
+        pkg == context.packageName -> "Podomètre"
+        // Pas comptes par Sante Connect lui-meme (Android 16) : com.android.healthconnect.phone.<id>
+        pkg.startsWith("com.android.healthconnect.phone") -> "le téléphone"
+        else -> KNOWN_APPS[pkg] ?: pkg
     }
 
     private companion object {
         const val TEST_STEPS = 300L
+
+        val KNOWN_APPS = mapOf(
+            TREELY_PACKAGE to "Treely",
+            FIT_PACKAGE to "Google Fit",
+            HC_PACKAGE to "le téléphone",
+            "com.android.healthconnect.controller" to "le téléphone",
+            "android" to "le téléphone",
+            "com.sec.android.app.shealth" to "Samsung Health",
+            "com.huawei.health" to "Huawei Santé",
+            "com.fitbit.FitbitMobile" to "Fitbit",
+            "com.garmin.android.apps.connectmobile" to "Garmin Connect",
+            "com.xiaomi.wearable" to "Mi Fitness",
+            "com.mi.health" to "Mi Fitness",
+        )
     }
 }
