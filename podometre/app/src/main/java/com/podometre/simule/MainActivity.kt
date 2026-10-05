@@ -56,7 +56,11 @@ class MainActivity : ComponentActivity() {
     )
 
     private val askPermissions =
-        registerForActivityResult(PermissionController.createRequestPermissionResultContract()) {
+        registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+            // Apres deux refus, Android n'affiche plus la demande : il faut passer par les reglages
+            if (!granted.containsAll(permissions)) {
+                toast("Autorisation refusée. Active-la dans Health Connect › Autorisations des applis › Podomètre.")
+            }
             refresh()
         }
 
