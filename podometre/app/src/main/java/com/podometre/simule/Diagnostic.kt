@@ -228,31 +228,31 @@ internal class Diagnostic(private val context: Context) {
             return
         }
         ok("Treely est installé" + (treely.version?.let { " (version $it)." } ?: "."))
-
-        if (treely.readsHealthConnect) {
-            ok("Treely lit ses pas dans Santé Connect.")
-            when (treely.allowed) {
-                true -> ok("Treely a le droit de lire les pas.")
-                false -> fail("Treely n'a pas le droit de lire les pas : bouton « Accès de Treely dans Santé Connect », active Pas.")
-                null -> unknown("Vérifie dans Santé Connect › Autorisations des applis que Treely peut lire les Pas.")
-            }
-            info("Dans Treely, la source des pas doit être Santé Connect.")
-            return
+        if (treely.readsHealthConnect && treely.allowed == true) {
+            info("Treely a aussi accès à Santé Connect, mais d'après son aide, sur Android il compte les pas de Google Fit.")
         }
 
+        // D'apres la FAQ de Treely : « Si tes pas ne sont pas comptes, c'est probablement qu'il te manque Google Fit »
         viaFit = true
-        info("Treely prend ses pas dans Google Fit, pas directement dans Santé Connect.")
+        info("Chemin des pas : Podomètre → Santé Connect → Google Fit → Treely.")
         val fit = appSteps(pm, FIT_PACKAGE)
         if (!fit.installed) {
-            fail("Google Fit n'est pas installé : installe-le avec le même compte Google que dans Treely.")
+            fail(
+                "Google Fit n'est pas installé : bouton « Installer Google Fit », ouvre-le, connecte le même " +
+                    "compte Google que dans Treely, puis relance Treely."
+            )
             return
         }
         ok("Google Fit est installé.")
+        if (!fit.readsHealthConnect) {
+            fail("Cette version de Google Fit ne sait pas lire Santé Connect : mets-la à jour dans le Play Store.")
+            return
+        }
         when (fit.allowed) {
-            true -> ok("Google Fit a le droit de lire les pas de Santé Connect.")
+            true -> ok("Google Fit a le droit de lire les pas de Santé Connect, donc ceux de Podomètre.")
             false -> fail(
                 "Google Fit ne lit pas Santé Connect : Google Fit › Profil › ⚙ Paramètres › " +
-                    "« Synchroniser Fit avec Santé Connect », et tout autoriser."
+                    "« Synchroniser Fit avec Santé Connect » → activer, puis tout autoriser."
             )
             null -> unknown("Vérifie dans Google Fit › Profil › ⚙ Paramètres que « Synchroniser Fit avec Santé Connect » est activé.")
         }
@@ -261,12 +261,12 @@ internal class Diagnostic(private val context: Context) {
             if (last != null) {
                 ok("Google Fit échange bien avec Santé Connect (dernières données à ${clock.format(last)}).")
             } else {
-                unknown("Google Fit n'a rien envoyé à Santé Connect aujourd'hui : la synchro est peut-être coupée. Ouvre Google Fit.")
+                unknown("Google Fit n'a encore rien envoyé à Santé Connect aujourd'hui : ouvre Google Fit pour lancer la synchro.")
             }
         }
         unknown(
-            "Google Fit → Treely : impossible à vérifier d'ici. Ajoute des pas, ouvre Google Fit : " +
-                "si son total monte, Treely suivra à sa synchro. S'il ne monte pas, c'est Google Fit qui bloque."
+            "Dernier point, à voir à la main : ouvre Google Fit, son total du jour doit inclure les pas de Podomètre. " +
+                "Ensuite relance Treely."
         )
     }
 

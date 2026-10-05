@@ -84,8 +84,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var openFit: Button
     private lateinit var appAccess: Button
 
-    // Appli qui doit lire les pas dans Sante Connect : Treely, ou Google Fit quand Treely passe par lui
-    private var reader = TREELY_PACKAGE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,7 +124,7 @@ class MainActivity : ComponentActivity() {
         findViewById<Button>(R.id.diagRun).setOnClickListener { runDiagnostic(force = true) }
         liveToggle.setOnClickListener { if (liveJob == null) startLive() else stopLive() }
         findViewById<Button>(R.id.openHc).setOnClickListener { openHealthConnect() }
-        appAccess.setOnClickListener { openAccess(reader) }
+        appAccess.setOnClickListener { openAccess(FIT_PACKAGE) }
         openTreely.setOnClickListener { openApp(TREELY_PACKAGE) }
         openFit.setOnClickListener { openApp(FIT_PACKAGE) }
         findViewById<Button>(R.id.clear).setOnClickListener { confirmClear() }
@@ -321,14 +319,10 @@ class MainActivity : ComponentActivity() {
                     .setTitle("Pas ajoutés")
                     .setNegativeButton("OK", null)
                 if (treely.installed) {
-                    message.append(
-                        if (treely.readsHealthConnect) "\n\nOuvre Treely pour qu'il se synchronise."
-                        else "\n\nTreely passe par Google Fit : ouvre d'abord Google Fit pour qu'il récupère les pas, puis Treely."
-                    )
-                    dialog.setPositiveButton("Ouvrir Treely") { _, _ -> openApp(TREELY_PACKAGE) }
-                    if (!treely.readsHealthConnect) {
-                        dialog.setNeutralButton("Google Fit") { _, _ -> openApp(FIT_PACKAGE) }
-                    }
+                    // Treely compte les pas de Google Fit : Google Fit doit d'abord les recuperer
+                    message.append("\n\nOuvre d'abord Google Fit pour qu'il récupère les pas, puis Treely.")
+                    dialog.setPositiveButton("Google Fit") { _, _ -> openApp(FIT_PACKAGE) }
+                    dialog.setNeutralButton("Treely") { _, _ -> openApp(TREELY_PACKAGE) }
                 }
                 dialog.setMessage(message).show()
             } catch (e: CancellationException) {
@@ -478,8 +472,6 @@ class MainActivity : ComponentActivity() {
         val fit = appSteps(packageManager, FIT_PACKAGE)
         openTreely.text = if (treely.installed) "Ouvrir Treely" else "Installer Treely"
         openFit.text = if (fit.installed) "Ouvrir Google Fit" else "Installer Google Fit"
-        reader = if (treely.installed && !treely.readsHealthConnect) FIT_PACKAGE else TREELY_PACKAGE
-        appAccess.text = "Accès de ${appName(reader)} dans Santé Connect"
     }
 
     private fun appName(pkg: String) = if (pkg == FIT_PACKAGE) "Google Fit" else "Treely"

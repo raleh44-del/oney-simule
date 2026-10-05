@@ -29,14 +29,16 @@ remonter dans **Treely** (Treely for Teams).
 
 L'appli a une section **Faire monter les pas sur Treely** avec des raccourcis :
 
-1. Dans Treely, la source des pas doit être Santé Connect (ou Google Fit).
-2. Dans Santé Connect, Treely doit avoir le droit de lire les **Pas** — bouton
-   *Accès de Treely dans Santé Connect*.
+1. Sur Android, Treely compte les pas de **Google Fit** (voir son aide) : les pas
+   suivent le chemin Podomètre → Santé Connect → Google Fit → Treely.
+2. Google Fit doit être installé, connecté au même compte Google que Treely, et
+   avoir le droit de lire les **Pas** de Santé Connect — bouton
+   *Accès de Google Fit dans Santé Connect*.
 3. Dans *Santé Connect › Données et accès › Activité › Pas › Sources de
    données*, placer **Podomètre** en premier.
-4. Si Treely passe par Google Fit : *Google Fit › Profil › Paramètres* →
-   activer « Synchroniser Fit avec Santé Connect ».
-5. Tester avec 200 pas, puis ouvrir Treely (l'appli le propose après chaque ajout).
+4. Dans *Google Fit › Profil › Paramètres*, activer « Synchroniser Fit avec
+   Santé Connect ».
+5. Après un ajout, ouvrir Google Fit (son total doit monter), puis Treely.
 
 ## Limites
 
