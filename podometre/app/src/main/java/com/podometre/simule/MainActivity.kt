@@ -440,7 +440,10 @@ class MainActivity : ComponentActivity() {
         val hc = client ?: return
         AlertDialog.Builder(this)
             .setTitle("Effacer les pas ajoutés ?")
-            .setMessage("Supprime tous les pas ajoutés aujourd'hui par Podomètre. Les vrais pas du téléphone ne sont pas touchés.")
+            .setMessage(
+                "Supprime tous les pas ajoutés aujourd'hui par Podomètre. Les vrais pas du téléphone ne sont pas touchés.\n\n" +
+                    "Attention : si Google Fit les a déjà récupérés, ils restent dans Google Fit (et donc dans Treely)."
+            )
             .setNegativeButton("Annuler", null)
             .setPositiveButton("Effacer") { _, _ ->
                 lifecycleScope.launch {

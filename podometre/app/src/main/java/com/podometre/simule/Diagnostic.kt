@@ -96,6 +96,7 @@ internal class Diagnostic(private val context: Context) {
     private val numbers = NumberFormat.getIntegerInstance(Locale.FRANCE)
     private val clock = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
     private var viaFit = false
+    private var fitHasOurs = false
 
     private fun ok(text: String) { checks += Check(Status.OK, text) }
     private fun fail(text: String) { checks += Check(Status.FAIL, text) }
@@ -113,7 +114,8 @@ internal class Diagnostic(private val context: Context) {
         working = checks.none { it.status == Status.FAIL }
         verdict = when {
             !working -> "✗ Ça ne peut pas marcher pour l'instant : corrige les points en rouge."
-            viaFit -> "✓ Tout est bon sur le téléphone. Reste à voir si Google Fit transmet à Treely (dernier point)."
+            fitHasOurs -> "✓ Google Fit a bien les pas de Podomètre. Ouvre Treely et actualise : il les prend dans Google Fit."
+            viaFit -> "✓ Tout est bon sur le téléphone. Reste à voir si Google Fit récupère les pas (dernier point)."
             else -> "✓ Tout est bon : les pas ajoutés devraient arriver dans Treely à sa prochaine synchro."
         }
         return this
@@ -256,17 +258,36 @@ internal class Diagnostic(private val context: Context) {
             )
             null -> unknown("Vérifie dans Google Fit › Profil › ⚙ Paramètres que « Synchroniser Fit avec Santé Connect » est activé.")
         }
-        if (today != null) {
-            val last = today.filter { it.metadata.dataOrigin.packageName == FIT_PACKAGE }.maxOfOrNull { it.endTime }
-            if (last != null) {
-                ok("Google Fit échange bien avec Santé Connect (dernières données à ${clock.format(last)}).")
-            } else {
-                unknown("Google Fit n'a encore rien envoyé à Santé Connect aujourd'hui : ouvre Google Fit pour lancer la synchro.")
-            }
+        if (today == null) return
+        val fitRecords = today.filter { it.metadata.dataOrigin.packageName == FIT_PACKAGE }
+        val last = fitRecords.maxOfOrNull { it.endTime }
+        if (last == null) {
+            unknown("Google Fit n'a encore rien envoyé à Santé Connect aujourd'hui : ouvre Google Fit pour lancer la synchro.")
+            return
+        }
+        ok("Google Fit échange bien avec Santé Connect (dernières données à ${clock.format(last)}).")
+
+        // Google Fit renvoie dans Sante Connect son propre total, qui inclut ce qu'il a recupere :
+        // s'il depasse nettement les vrais pas, c'est qu'il a pris ceux de Podometre.
+        val bySource = today.groupBy { it.metadata.dataOrigin.packageName }.mapValues { (_, r) -> r.sumOf { it.count } }
+        val ours = bySource[context.packageName] ?: 0L
+        val fitSteps = bySource[FIT_PACKAGE] ?: 0L
+        val real = bySource.filterKeys { it != context.packageName && it != FIT_PACKAGE }.values.maxOrNull() ?: 0L
+        if (ours == 0L) {
+            info("Ajoute des pas pour vérifier que Google Fit les récupère.")
+        } else if (fitSteps >= (ours + real) * 9 / 10) {
+            fitHasOurs = true
+            ok("Google Fit a récupéré les pas de Podomètre : il compte ${numbers.format(fitSteps)} pas aujourd'hui.")
+        } else {
+            unknown(
+                "Google Fit ne compte que ${numbers.format(fitSteps)} pas, sans ceux de Podomètre (${numbers.format(ours)}). " +
+                    "Ouvre Google Fit pour qu'il les récupère, puis relance le test."
+            )
+            return
         }
         unknown(
-            "Dernier point, à voir à la main : ouvre Google Fit, son total du jour doit inclure les pas de Podomètre. " +
-                "Ensuite relance Treely."
+            "Dernier point, impossible à voir d'ici : Treely lit Google Fit par internet. Ouvre Treely et " +
+                "actualise ; si rien ne bouge, redémarre le téléphone (conseil de l'aide Treely)."
         )
     }
 
