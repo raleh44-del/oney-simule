@@ -4,9 +4,11 @@
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <uses-permission android:name="android.permission.health.WRITE_STEPS" />
 
-    <!-- Android 13 et moins : Health Connect est une appli a part -->
+    <!-- Sante Connect (appli a part jusqu'a Android 13), Treely et Google Fit -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
+        <package android:name="com.treely.android" />
+        <package android:name="com.google.android.apps.fitness" />
     </queries>
 
     <application

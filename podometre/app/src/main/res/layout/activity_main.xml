@@ -168,22 +168,49 @@
                     android:text="Démarrer la marche" />
             </LinearLayout>
 
-            <!-- Reglages -->
+            <!-- Treely -->
             <LinearLayout style="@style/Card">
 
                 <TextView
                     style="@style/CardTitle"
-                    android:text="Si le challenge ne voit pas les pas" />
+                    android:text="Faire monter les pas sur Treely" />
+
+                <TextView
+                    android:id="@+id/treelyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     style="@style/Label"
-                    android:text="1. L\'appli du challenge doit lire ses pas depuis Health Connect.\n2. Dans Health Connect › Données et accès › Pas › Sources de données, place Podomètre en premier : sinon les pas réels du téléphone passent avant sur les mêmes heures." />
+                    android:text="1. Dans Treely, la source des pas doit être Santé Connect (ou Google Fit).\n2. Dans Santé Connect, Treely doit avoir le droit de lire les Pas.\n3. Dans Santé Connect › Données et accès › Activité › Pas › Sources de données, place Podomètre en premier. Sinon, sur les mêmes heures, ce sont les pas réels du téléphone qui comptent.\n4. Si Treely passe par Google Fit : Google Fit › Profil › Paramètres › active « Synchroniser Fit avec Santé Connect ».\n5. Test : ajoute 200 pas ici, puis ouvre Treely pour qu\'il se synchronise." />
+
+                <Button
+                    android:id="@+id/openTreely"
+                    style="@style/Primary"
+                    android:text="Ouvrir Treely" />
+
+                <Button
+                    android:id="@+id/treelyAccess"
+                    style="@style/Secondary"
+                    android:layout_marginTop="6dp"
+                    android:text="Accès de Treely dans Santé Connect" />
 
                 <Button
                     android:id="@+id/openHc"
                     style="@style/Secondary"
-                    android:layout_marginTop="6dp"
-                    android:text="Ouvrir Health Connect" />
+                    android:text="Priorité des sources dans Santé Connect" />
+
+                <Button
+                    android:id="@+id/openFit"
+                    style="@style/Secondary"
+                    android:text="Ouvrir Google Fit" />
+            </LinearLayout>
+
+            <!-- Reglages -->
+            <LinearLayout style="@style/Card">
 
                 <Button
                     android:id="@+id/clear"

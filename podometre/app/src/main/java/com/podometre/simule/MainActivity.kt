@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
             // Apres deux refus, Android n'affiche plus la demande : il faut passer par les reglages
             if (!granted.containsAll(permissions)) {
-                toast("Autorisation refusée. Active-la dans Health Connect › Autorisations des applis › Podomètre.")
+                toast("Autorisation refusée. Active-la dans Santé Connect › Autorisations des applis › Podomètre.")
             }
             refresh()
         }
@@ -88,6 +88,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var add: Button
     private lateinit var live: TextView
     private lateinit var liveToggle: Button
+    private lateinit var treelyState: TextView
+    private lateinit var openTreely: Button
+    private lateinit var openFit: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,6 +108,9 @@ class MainActivity : ComponentActivity() {
         add = findViewById(R.id.add)
         live = findViewById(R.id.live)
         liveToggle = findViewById(R.id.liveToggle)
+        treelyState = findViewById(R.id.treelyState)
+        openTreely = findViewById(R.id.openTreely)
+        openFit = findViewById(R.id.openFit)
 
         findViewById<Button>(R.id.quick2k).setOnClickListener { steps.setText("2000") }
         findViewById<Button>(R.id.quick5k).setOnClickListener { steps.setText("5000") }
@@ -122,6 +128,9 @@ class MainActivity : ComponentActivity() {
         add.setOnClickListener { addWalk() }
         liveToggle.setOnClickListener { if (liveJob == null) startLive() else stopLive() }
         findViewById<Button>(R.id.openHc).setOnClickListener { openHealthConnect() }
+        findViewById<Button>(R.id.treelyAccess).setOnClickListener { openTreelyAccess() }
+        openTreely.setOnClickListener { openApp(TREELY_PACKAGE) }
+        openFit.setOnClickListener { openApp(FIT_PACKAGE) }
         findViewById<Button>(R.id.clear).setOnClickListener { confirmClear() }
 
         updatePreview()
@@ -138,11 +147,11 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             when (HealthConnectClient.getSdkStatus(this@MainActivity)) {
                 HealthConnectClient.SDK_UNAVAILABLE -> {
-                    show(false, "Health Connect n'est pas disponible sur ce téléphone (Android 9 minimum).", null)
+                    show(false, "Santé Connect n'est pas disponible sur ce téléphone (Android 9 minimum).", null)
                     return@launch
                 }
                 HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
-                    show(false, "Installe ou mets à jour Health Connect pour continuer.", "Installer Health Connect") {
+                    show(false, "Installe ou mets à jour Santé Connect pour continuer.", "Installer Santé Connect") {
                         openStore()
                     }
                     return@launch
@@ -157,12 +166,13 @@ class MainActivity : ComponentActivity() {
                 emptySet<String>()
             }
             if (!granted.containsAll(permissions)) {
-                show(false, "Autorise Podomètre à lire et écrire les pas dans Health Connect.", "Autoriser") {
+                show(false, "Autorise Podomètre à lire et écrire les pas dans Santé Connect.", "Autoriser") {
                     askPermissions.launch(permissions)
                 }
                 return@launch
             }
-            show(true, "Connecté à Health Connect.", null)
+            show(true, "Connecté à Santé Connect.", null)
+            refreshTreely()
             refreshTotals(hc)
         }
     }
@@ -259,8 +269,18 @@ class MainActivity : ComponentActivity() {
                     .forEach { hc.insertRecords(it) }
 
                 val zone = ZoneId.systemDefault()
-                toast("${fmt(plan.steps)} pas ajoutés de ${clock.format(start.atZone(zone))} à ${clock.format(end.atZone(zone))}.")
+                val done = "${fmt(plan.steps)} pas ajoutés de ${clock.format(start.atZone(zone))} à ${clock.format(end.atZone(zone))}."
                 refreshTotals(hc)
+                if (isInstalled(TREELY_PACKAGE)) {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Pas ajoutés")
+                        .setMessage("$done\n\nOuvrir Treely pour qu'il les synchronise ?")
+                        .setNegativeButton("Plus tard", null)
+                        .setPositiveButton("Ouvrir Treely") { _, _ -> openApp(TREELY_PACKAGE) }
+                        .show()
+                } else {
+                    toast(done)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -399,16 +419,54 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS))
         } catch (e: ActivityNotFoundException) {
-            toast("Health Connect introuvable sur ce téléphone.")
+            toast("Santé Connect introuvable sur ce téléphone.")
         }
     }
 
-    private fun openStore() {
-        val market = Uri.parse("market://details?id=$HC_PACKAGE&url=healthconnect%3A%2F%2Fonboarding")
+    private fun refreshTreely() {
+        val treely = isInstalled(TREELY_PACKAGE)
+        treelyState.text = if (treely) "Treely est installé sur ce téléphone." else "Treely n'est pas installé sur ce téléphone."
+        treelyState.setTextColor(getColor(if (treely) R.color.green else R.color.error))
+        openTreely.text = if (treely) "Ouvrir Treely" else "Installer Treely"
+        openFit.text = if (isInstalled(FIT_PACKAGE)) "Ouvrir Google Fit" else "Installer Google Fit"
+    }
+
+    private fun isInstalled(pkg: String): Boolean = packageManager.getLaunchIntentForPackage(pkg) != null
+
+    /** Lance l'appli, ou sa page Play Store si elle n'est pas installee. */
+    private fun openApp(pkg: String) {
+        val launch = packageManager.getLaunchIntentForPackage(pkg)
+        if (launch != null) startActivity(launch) else openStore(pkg)
+    }
+
+    /** Ecran des autorisations Sante Connect de Treely, ou l'accueil de Sante Connect a defaut. */
+    private fun openTreelyAccess() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
+                startActivity(
+                    Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS")
+                        .putExtra(Intent.EXTRA_PACKAGE_NAME, TREELY_PACKAGE)
+                )
+                return
+            } catch (e: ActivityNotFoundException) {
+                // ecran indisponible : on retombe sur l'accueil
+            } catch (e: SecurityException) {
+                // idem
+            }
+        }
+        toast("Dans Santé Connect, ouvre Autorisations des applis › Treely et autorise Pas.")
+        openHealthConnect()
+    }
+
+    private fun openStore(pkg: String = HC_PACKAGE) {
+        val extra = if (pkg == HC_PACKAGE) "&url=healthconnect%3A%2F%2Fonboarding" else ""
         try {
-            startActivity(Intent(Intent.ACTION_VIEW, market).setPackage("com.android.vending"))
+            startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg$extra"))
+                    .setPackage("com.android.vending")
+            )
         } catch (e: ActivityNotFoundException) {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$HC_PACKAGE")))
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg")))
         }
     }
 
@@ -442,6 +500,8 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val HC_PACKAGE = "com.google.android.apps.healthdata"
+        const val TREELY_PACKAGE = "com.treely.android"
+        const val FIT_PACKAGE = "com.google.android.apps.fitness"
         const val MAX_STEPS = 60_000L
         const val MAX_MINUTES = 720L
         const val MAX_AGO = 1440L
