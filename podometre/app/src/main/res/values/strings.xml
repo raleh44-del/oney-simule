@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Podomètre</string>
+    <string name="rationale">Cette application ajoute des pas dans Health Connect et lit le total du jour pour l\'afficher. Rien ne sort du téléphone.</string>
+</resources>
