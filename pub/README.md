@@ -1,7 +1,7 @@
 # Pub magasin — TV QLED EDENWOOD 50" (ED50QT01FHD-RE)
 
 `tv-edenwood-50-qled.mp4` : 30 s en boucle, 1920×1080, H.264 High 4.1, 30 i/s,
-son AAC à −16 LUFS. Se lit depuis une clé USB sur les TV de démonstration.
+son AAC à −14 LUFS. Se lit depuis une clé USB sur les TV de démonstration.
 
 | Temps | Scène |
 |---|---|
@@ -19,6 +19,10 @@ Le prix, l'éco-participation et la classe énergie restent affichés en coin de
 de droits) : 96 BPM en fa majeur, 12 mesures = 30 s. La batterie entre quand la TV
 s'allume (5 s), la mélodie avec la Smart TV (10 s), un carillon souligne le prix
 (23 s), et le fondu final rejoint le début pour boucler sans coupure.
+
+Mixée pour la barre de son 2.1 du rayon : graves pleins pour le caisson, batterie
+en quatre temps dès le thème, accords qui respirent sous la grosse caisse, échos
+stéréo sur la mélodie et aigus relevés.
 
 ## Modifier puis refaire la vidéo
 
