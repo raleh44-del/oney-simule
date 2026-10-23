@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Pub TV QLED Edenwood 50"</title>
+<!--
+  Pub magasin 1920x1080 — TV QLED EDENWOOD ED50QT01FHD-RE.
+  Animation pilotée image par image par frame(t) : render.js l'appelle pour
+  chaque image puis assemble la vidéo. Ouvrir la page dans un navigateur la
+  joue en boucle pour prévisualiser.
+-->
+<style>
+:root{
+  --noir:#0a0a0e; --jaune:#ffc20e; --kraft:#c4a77d; --kraft2:#e2d3b8;
+  --gris:#b4b4c0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--noir)}
+body{font-family:'Inter',sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+.d{font-family:'Inter Display','Inter',sans-serif}
+#scene{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--noir)}
+.abs{position:absolute}
+.g{will-change:transform,opacity}
+
+/* fond */
+#glow{inset:0}
+#w{inset:0}
+#grain{inset:0;opacity:.06;mix-blend-mode:overlay;pointer-events:none}
+
+/* intro */
+#wm{left:0;right:0;top:0;text-align:center}
+#wm b{display:block;font-size:150px;font-weight:800;letter-spacing:-5px;line-height:1}
+#wm span{display:block;margin-top:14px;font-size:26px;font-weight:600;letter-spacing:11px;color:var(--kraft2)}
+#iTitre{left:0;right:0;top:420px;text-align:center;font-size:190px;font-weight:900;letter-spacing:-6px;line-height:1}
+#iTitre em{font-style:normal;color:var(--jaune)}
+#iSous{left:0;right:0;top:660px;text-align:center;font-size:48px;font-weight:500;color:#e4e4ec}
+
+/* TV */
+#tv{left:0;top:0;width:1024px;height:660px}
+#cadre{position:absolute;left:0;top:0;width:1024px;height:586px;border-radius:10px;
+  background:linear-gradient(145deg,#3a3a42,#0c0c10 40%,#24242a);padding:11px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6)}
+#ecran{position:relative;width:1002px;height:564px;border-radius:3px;overflow:hidden;background:#000}
+#ecran > div,#ecran > svg{position:absolute;inset:0}
+#halo{position:absolute;left:-60px;right:-60px;top:-40px;height:660px;border-radius:50%;filter:blur(70px);opacity:.55}
+#pieds{position:absolute;left:0;top:584px;width:1024px;height:76px}
+#sol{position:absolute;left:60px;right:60px;top:640px;height:40px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(0,0,0,.75),transparent)}
+#flash{background:linear-gradient(90deg,#c9b8ff,#fff 50%,#b8e8ff);transform-origin:center}
+#reflet{background:linear-gradient(115deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,0) 38%);pointer-events:none}
+
+/* interface smart TV dans l'écran */
+#ui{background:#0c0e15;padding:26px 30px}
+.ui-bar{display:flex;align-items:center;gap:22px;font-size:17px;font-weight:600;color:#9aa0b4}
+.ui-bar b{color:#fff;font-size:19px}
+.ui-bar i{flex:1}
+.ui-bar .rond{width:30px;height:30px;border-radius:50%;background:#262a38}
+.ui-hero{position:relative;margin-top:20px;height:250px;border-radius:14px;overflow:hidden}
+.ui-hero .img{position:absolute;inset:0}
+.ui-hero .txt{position:absolute;left:30px;bottom:26px}
+.ui-hero .txt b{display:block;font-size:40px;font-weight:800;letter-spacing:-1px}
+.ui-hero .txt span{display:block;margin-top:6px;font-size:18px;color:#e6e6f0}
+.ui-lbl{margin-top:22px;font-size:17px;font-weight:700;color:#9aa0b4}
+.ui-row{position:relative;display:flex;gap:16px;margin-top:12px}
+.app{width:176px;height:104px;border-radius:12px;background:#1b1e2a;position:relative;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:21px;font-weight:800;line-height:1.1;overflow:hidden}
+.app:after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:var(--c)}
+#focus{position:absolute;left:0;top:-5px;width:186px;height:114px;border:4px solid #fff;border-radius:16px;
+  margin-left:-5px;box-shadow:0 0 24px rgba(255,255,255,.35)}
+
+/* colonnes de texte à droite */
+.col{left:1190px;top:0;width:660px}
+.kick{font-size:30px;font-weight:800;letter-spacing:8px;color:var(--jaune)}
+#s2 .k50{font-size:300px;font-weight:900;letter-spacing:-12px;line-height:.9;margin-top:18px}
+#s2 .cm{font-size:64px;font-weight:800;color:var(--kraft2);margin-top:6px}
+#s2 .l{font-size:44px;font-weight:700;margin-top:34px;line-height:1.15}
+#s2 .l small{display:block;font-size:34px;font-weight:500;color:var(--gris);margin-top:10px}
+#s3 .t{font-size:150px;font-weight:900;letter-spacing:-6px;line-height:1;margin-top:20px}
+#s3 .s{font-size:40px;font-weight:600;color:var(--gris);margin-top:10px}
+#s3 .s b{color:#fff;font-weight:800;letter-spacing:1px}
+.chk{display:flex;align-items:center;gap:20px;font-size:38px;font-weight:700;margin-top:26px}
+.chk svg{flex:none;width:46px;height:46px}
+#s3 .chk:first-of-type{margin-top:46px}
+
+/* points forts */
+#s4t{left:0;right:0;top:120px;text-align:center}
+#s4t .t{font-size:96px;font-weight:900;letter-spacing:-3px;margin-top:10px}
+.tuile{width:500px;height:230px;border-radius:26px;padding:40px 40px 0;
+  background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  border:2px solid rgba(255,255,255,.12)}
+.tuile:before{content:"";display:block;width:64px;height:8px;border-radius:4px;background:var(--c);margin-bottom:22px}
+.tuile b{display:block;font-size:72px;font-weight:900;letter-spacing:-2px;line-height:1}
+.tuile span{display:block;margin-top:16px;font-size:28px;font-weight:500;color:var(--gris)}
+
+/* prix */
+#s5 .m{font-size:64px;font-weight:900;letter-spacing:-2px;line-height:1.05;margin-top:14px}
+#s5 .ref{font-size:28px;font-weight:600;color:var(--gris);margin-top:12px;letter-spacing:1px}
+.etiq{display:inline-flex;align-items:flex-start;background:var(--jaune);color:#111;border-radius:22px;
+  padding:6px 46px 14px 40px;box-shadow:0 24px 60px rgba(255,194,14,.28),0 10px 30px rgba(0,0,0,.5)}
+.etiq b{font-size:250px;font-weight:900;letter-spacing:-10px;line-height:1}
+.etiq i{font-style:normal;font-size:120px;font-weight:900;line-height:1;margin-top:30px;margin-left:8px}
+#prix{margin-top:30px;transform-origin:20% 50%}
+#ttc{font-size:26px;font-weight:700;color:var(--gris);margin-top:16px;letter-spacing:2px}
+#info{display:flex;align-items:center;gap:34px;margin-top:34px}
+.dispo{display:inline-flex;align-items:center;gap:14px;margin-top:34px;padding:16px 30px;border-radius:40px;
+  background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18);font-size:34px;font-weight:800}
+.dispo i{width:18px;height:18px;border-radius:50%;background:#3ddc84;box-shadow:0 0 16px #3ddc84}
+#note{left:0;right:60px;bottom:40px;text-align:right;font-size:20px;color:#8c8c99}
+
+/* étiquette énergie (classe + échelle A-G) */
+.nrj{display:inline-flex;align-items:stretch;height:var(--h);font-family:'Inter',sans-serif}
+.nrj .ech{width:calc(var(--h)*.42);background:#fff;color:#000;border:calc(var(--h)*.03) solid #000;border-right:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  font-size:calc(var(--h)*.27);font-weight:800;line-height:1;padding:calc(var(--h)*.06) 0}
+.nrj .ech svg{width:calc(var(--h)*.16);height:calc(var(--h)*.3)}
+.nrj .fl{width:calc(var(--h)*1.05);background:var(--c);display:flex;align-items:center;padding-left:calc(var(--h)*.2);
+  clip-path:polygon(0 0,68% 0,100% 50%,68% 100%,0 100%)}
+.nrj .fl b{font-size:calc(var(--h)*.78);font-weight:900;color:#fff;line-height:1;
+  -webkit-text-stroke:calc(var(--h)*.025) #000;paint-order:stroke fill}
+.dur{display:flex;align-items:center;gap:18px}
+.dur .n{width:122px;height:122px;border-radius:50%;background:#8dc63f;color:#0b2a07;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.dur .n b{font-family:'Inter',sans-serif;font-size:44px;font-weight:900;letter-spacing:0}
+.dur .n span{font-size:19px;font-weight:800;margin-top:2px}
+.dur > span{font-size:26px;font-weight:700;line-height:1.2;color:#e4e4ec}
+
+/* rappel prix en coin et marque */
+#coin{right:56px;top:46px;display:flex;align-items:center;gap:16px;transform-origin:100% 0}
+#coin .etiq{border-radius:14px;padding:2px 22px 6px 20px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#coin .etiq b{font-size:84px;letter-spacing:-3px}
+#coin .etiq i{font-size:42px;margin-top:10px;margin-left:3px}
+#marque{left:60px;bottom:40px}
+#marque b{display:block;font-size:44px;font-weight:800;letter-spacing:-1.5px;line-height:1}
+#marque span{display:block;font-size:13px;font-weight:700;letter-spacing:5px;color:var(--kraft2);margin-top:6px}
+
+#noir{inset:0;background:#000;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="scene">
+  <div id="glow" class="abs"></div>
+
+  <!-- le W d'Edenwood, repris du carton -->
+  <svg id="w" class="abs" viewBox="0 0 1920 1080">
+    <defs>
+      <linearGradient id="kraft" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#d6bf98"/><stop offset="1" stop-color="#a88a5e"/>
+      </linearGradient>
+    </defs>
+    <polyline id="wTrait" pathLength="1" points="-80,-60 420,1140 960,-60 1500,1140 2000,-60"
+      fill="none" stroke="url(#kraft)" stroke-width="250" stroke-linejoin="miter" stroke-miterlimit="6"
+      stroke-dasharray="1 1"/>
+  </svg>
+
+  <!-- intro -->
+  <div id="wm" class="abs g d"><b>edenwood</b><span>BY ELECTRO DEPOT</span></div>
+  <div id="iTitre" class="abs g d">TV QLED <em>50"</em></div>
+  <div id="iSous" class="abs g">Le grand écran aux couleurs éclatantes</div>
+
+  <!-- TV -->
+  <div id="tv" class="abs g">
+    <div id="halo"></div>
+    <div id="sol"></div>
+    <svg id="pieds" viewBox="0 0 1024 76">
+      <defs><linearGradient id="pied" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#4a4a54"/><stop offset="1" stop-color="#15151a"/></linearGradient></defs>
+      <polygon points="118,0 134,0 98,70 74,70" fill="url(#pied)"/>
+      <polygon points="118,0 134,0 170,70 146,70" fill="url(#pied)"/>
+      <polygon points="890,0 906,0 870,70 846,70" fill="url(#pied)"/>
+      <polygon points="890,0 906,0 942,70 918,70" fill="url(#pied)"/>
+    </svg>
+    <div id="cadre">
+      <div id="ecran">
+        <div id="ciel"></div>
+        <svg id="paysage" viewBox="0 0 1002 564" preserveAspectRatio="none">
+          <circle id="soleil" cx="560" cy="300" r="70" fill="#fff4c2"/>
+          <path id="mont1" d="M-100 380 L60 300 L170 340 L300 250 L420 330 L540 270 L660 340 L780 260 L900 320 L1100 290 L1100 564 L-100 564Z" fill="#43206a"/>
+          <path id="mont2" d="M-100 430 L80 370 L230 410 L380 350 L520 420 L650 380 L800 430 L950 370 L1100 410 L1100 564 L-100 564Z" fill="#1f0f3a"/>
+          <path id="mont3" d="M-100 490 L120 450 L300 480 L470 440 L640 485 L820 455 L1100 480 L1100 564 L-100 564Z" fill="#0b0618"/>
+        </svg>
+        <div id="ui">
+          <div class="ui-bar"><b>Accueil</b><span>Direct</span><span>Applications</span><span>Médias</span><i></i><span class="rond"></span><span class="rond"></span></div>
+          <div class="ui-hero"><div class="img" id="uiImg"></div>
+            <div class="txt"><b>Films, séries, sport</b><span>Vos applis préférées au même endroit</span></div></div>
+          <div class="ui-lbl">Applications</div>
+          <div class="ui-row" id="apps">
+            <div class="app" style="--c:#ff4d6d">Netflix</div>
+            <div class="app" style="--c:#ffb800">YouTube</div>
+            <div class="app" style="--c:#00c2ff">Prime<br>Video</div>
+            <div class="app" style="--c:#8b5cff">Disney+</div>
+            <div class="app" style="--c:#00e0a4">Samsung<br>TV Plus</div>
+            <div id="focus"></div>
+          </div>
+        </div>
+        <div id="flash"></div>
+        <div id="reflet"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- scène 2 : la taille -->
+  <div id="s2" class="abs col d">
+    <div class="kick st">TV QLED</div>
+    <div class="k50 st">50"</div>
+    <div class="cm st">127 cm</div>
+    <div class="l st">Technologie QLED<small>Full HD 1080p · HDR10</small></div>
+  </div>
+
+  <!-- scène 3 : smart TV -->
+  <div id="s3" class="abs col d">
+    <div class="kick st">SMART TV</div>
+    <div class="t st">Tizen OS</div>
+    <div class="s st">Powered by <b>SAMSUNG</b></div>
+    <div class="chk st"><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="23" fill="#ffc20e"/><path d="M13 23.5l7 7 13-14" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>Compatible Apple AirPlay</div>
+    <div class="chk st"><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="23" fill="#ffc20e"/><path d="M13 23.5l7 7 13-14" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>Compatible Apple Home</div>
+    <div class="chk st"><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="23" fill="#ffc20e"/><path d="M13 23.5l7 7 13-14" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>Wi-Fi intégré</div>
+  </div>
+
+  <!-- scène 4 : points forts -->
+  <div id="s4t" class="abs d">
+    <div class="kick st">TV QLED EDENWOOD 50"</div>
+    <div class="t st">Les points forts</div>
+  </div>
+  <div id="s4" class="abs d">
+    <div class="tuile abs" style="--c:#ff4d6d;left:180px;top:390px"><b>Full HD</b><span>Résolution 1080p</span></div>
+    <div class="tuile abs" style="--c:#ffb800;left:710px;top:390px"><b>HDR10</b><span>Plage dynamique étendue</span></div>
+    <div class="tuile abs" style="--c:#00c2ff;left:1240px;top:390px"><b>Dolby Audio</b><span>Technologie son</span></div>
+    <div class="tuile abs" style="--c:#8b5cff;left:180px;top:650px"><b>60 Hz</b><span>Fréquence d'affichage</span></div>
+    <div class="tuile abs" style="--c:#00e0a4;left:710px;top:650px"><b>3 HDMI</b><span>+ USB multimédia et optique</span></div>
+    <div class="tuile abs" style="--c:#ffc20e;left:1240px;top:650px"><b>Wi-Fi</b><span>Smart TV connectée</span></div>
+  </div>
+
+  <!-- scène 5 : le prix -->
+  <div id="s5" class="abs col d" style="left:1080px;width:780px">
+    <div class="kick st" style="letter-spacing:4px">TV QLED 50" · 127 cm</div>
+    <div class="m st">EDENWOOD<br>ED50QT01FHD-RE</div>
+    <div id="prix" class="st"><div class="etiq"><b>229</b><i>€</i></div></div>
+    <div id="ttc" class="st">PRIX TTC</div>
+    <div id="info" class="st">
+      <div class="nrj" style="--h:118px;--c:#fdb913">
+        <div class="ech"><span>A</span><svg viewBox="0 0 16 30"><path d="M8 1v28M2 7l6-6 6 6M2 23l6 6 6-6" fill="none" stroke="#000" stroke-width="2.4"/></svg><span>G</span></div>
+        <div class="fl"><b>E</b></div>
+      </div>
+      <div class="dur"><div class="n"><b>7,1</b><span>/10</span></div><span>Indice de<br>durabilité</span></div>
+    </div>
+    <div class="dispo st"><i></i>Disponible en magasin</div>
+  </div>
+  <div id="note" class="abs">Réf. 10017726 · Offre valable dans la limite des stocks disponibles.</div>
+
+  <!-- rappel permanent -->
+  <div id="coin" class="abs g d">
+    <div class="nrj" style="--h:70px;--c:#fdb913">
+      <div class="ech"><span>A</span><svg viewBox="0 0 16 30"><path d="M8 1v28M2 7l6-6 6 6M2 23l6 6 6-6" fill="none" stroke="#000" stroke-width="2.4"/></svg><span>G</span></div>
+      <div class="fl"><b>E</b></div>
+    </div>
+    <div class="etiq"><b>229</b><i>€</i></div>
+  </div>
+  <div id="marque" class="abs g d"><b>edenwood</b><span>BY ELECTRO DEPOT</span></div>
+
+  <svg id="grain" class="abs" viewBox="0 0 1920 1080"><filter id="bruit"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/></filter><rect width="1920" height="1080" filter="url(#bruit)"/></svg>
+  <div id="noir" class="abs"></div>
+</div>
+
+<script>
+const DUREE = 30;
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, x) => a + (b - a) * x;
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = x => { const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+
+function show(el, o, tf){
+  el.style.opacity = o;
+  el.style.visibility = o < .002 ? 'hidden' : 'visible';
+  if (tf !== undefined) el.style.transform = tf;
+}
+
+// apparition [a ; a+dIn], disparition [b-dOut ; b], glissement vertical dy
+function reveal(el, t, a, b, o = {}){
+  const {dy = 50, dx = 0, dIn = .7, dOut = .45, s0 = 1, pop = false} = o;
+  const pin = prog(t, a, a + dIn), pout = inOut(prog(t, b - dOut, b));
+  const e = out3(pin), s = pop ? lerp(s0, 1, back(pin)) : lerp(s0, 1, e);
+  const x = (1 - e) * dx - pout * dx * .5;
+  const y = (1 - e) * dy - pout * dy * .5;
+  show(el, Math.min(clamp(pin * 1.6), 1 - pout), `translate(${x}px,${y}px) scale(${s})`);
+}
+function stagger(sel, t, a, b, pas, o){
+  document.querySelectorAll(sel).forEach((el, i) => reveal(el, t, a + i * pas, b, o));
+}
+
+// fond et écran : périodes qui divisent DUREE pour une boucle sans raccord
+const TAU = Math.PI * 2;
+function blobs(t, liste){
+  return liste.map(([x, y, c, r]) => `radial-gradient(${r}% ${r * 1.2}% at ${x}% ${y}%, ${c}, ${c}00)`).join(',');
+}
+function fond(t){
+  const a = TAU * t / 15, b = TAU * t / 10;
+  $('glow').style.background = blobs(t, [
+    [18 + 8 * Math.sin(a), 30 + 10 * Math.cos(b), '#ff2d8726', 45],
+    [82 + 8 * Math.cos(a), 70 + 10 * Math.sin(b), '#00c2ff22', 45],
+    [55 + 12 * Math.sin(b), 105, '#ffb80018', 50],
+  ]) + ', #0a0a0e';
+}
+function ecran(t){
+  const a = TAU * t / 10, b = TAU * t / 15;
+  $('ciel').style.background = blobs(t, [
+    [50 + 22 * Math.sin(a), 45 + 8 * Math.cos(b), '#ff5e3a', 55],
+    [20 + 15 * Math.cos(b), 25 + 10 * Math.sin(a), '#ff2d87', 45],
+    [80 + 14 * Math.sin(b + 2), 20 + 10 * Math.cos(a + 1), '#7a3cff', 50],
+    [35 + 20 * Math.sin(a + 3), 10, '#00c2ff', 40],
+  ]) + ', linear-gradient(#2a0e5a, #ff8a3d 70%)';
+  $('soleil').setAttribute('cy', 300 + 14 * Math.sin(b));
+  $('mont1').setAttribute('transform', `translate(${18 * Math.sin(b)},0)`);
+  $('mont2').setAttribute('transform', `translate(${32 * Math.sin(b)},0)`);
+  $('mont3').setAttribute('transform', `translate(${50 * Math.sin(b)},0)`);
+  $('uiImg').style.background = blobs(t, [
+    [30 + 20 * Math.sin(a), 40, '#ff2d87', 60],
+    [75 + 15 * Math.cos(a), 60, '#00c2ff', 55],
+    [55, 10 + 10 * Math.sin(b), '#ffb800', 40],
+  ]) + ', #2a1050';
+  $('halo').style.background = `linear-gradient(90deg,#ff2d87,#7a3cff ${50 + 20 * Math.sin(a)}%,#00c2ff)`;
+}
+
+function tv(t){
+  // position du centre de l'écran et échelle, scène par scène
+  let cx = 640, cy = 470, s = 1, o = 1;
+  if (t < 15.6){
+    const e = out3(prog(t, 4.5, 5.4));
+    cy = lerp(880, 470, e); o = clamp(e * 1.5);
+  } else if (t < 21.9){
+    const e = Math.pow(prog(t, 15.6, 16.4), 2);
+    cx = lerp(640, -500, e); o = 1 - e;
+  } else {
+    const e = out3(prog(t, 21.9, 22.9));
+    cx = lerp(-500, 560, e); cy = 480; s = .9; o = clamp(e * 1.5);
+  }
+  show($('tv'), o, `translate(${cx - 512}px,${cy - 293}px) scale(${s})`);
+
+  // allumage : un trait blanc qui s'ouvre, puis l'image
+  const f = prog(t, 5.1, 5.75);
+  const allume = t >= 21.9 || f > 0;
+  $('flash').style.opacity = f > 0 && f < 1 ? .8 * (f < .45 ? 1 : 1 - (f - .45) / .55) : 0;
+  $('flash').style.transform = `scaleY(${lerp(.004, 1, out3(clamp(f / .45)))})`;
+  const img = t >= 21.9 ? 1 : prog(t, 5.35, 5.9);
+  $('ciel').style.opacity = $('paysage').style.opacity = allume ? img : 0;
+
+  // interface smart TV pendant la scène 3
+  const ui = Math.min(prog(t, 10, 10.6), 1 - prog(t, 16.3, 16.4));
+  $('ui').style.opacity = ui;
+  document.querySelectorAll('.app').forEach((el, i) => {
+    const p = prog(t, 10.4 + i * .12, 10.9 + i * .12);
+    el.style.opacity = clamp(p * 1.5);
+    el.style.transform = `translateY(${(1 - out3(p)) * 30}px)`;
+  });
+  // le curseur de la télécommande parcourt les applis
+  const pas = 192, tt = Math.max(0, t - 11.4), k = Math.floor(tt / .9), dans = tt - k * .9;
+  const pos = Math.min(4, k) + (k < 4 ? inOut(prog(dans, .55, .9)) : 0);
+  $('focus').style.opacity = prog(t, 11.1, 11.4);
+  $('focus').style.transform = `translateX(${pos * pas}px)`;
+}
+
+function frame(t){
+  t = ((t % DUREE) + DUREE) % DUREE;
+  fond(t);
+  ecran(t);
+
+  // W : se trace, puis s'efface en motif discret
+  const trace = out3(prog(t, 0, 1.4));
+  $('wTrait').style.strokeDashoffset = 1 - trace;
+  $('w').style.opacity = lerp(lerp(.95, .2, inOut(prog(t, 1.3, 2))), .07, prog(t, 4.2, 5));
+
+  // intro
+  const monte = inOut(prog(t, 1.8, 2.5));
+  const pin = out3(prog(t, .45, 1.2)), pout = inOut(prog(t, 4, 4.5));
+  show($('wm'), Math.min(clamp(pin * 1.5), 1 - pout),
+       `translateY(${lerp(410, 205, monte) + (1 - pin) * 40 - pout * 30}px) scale(${lerp(1, .62, monte)})`);
+  reveal($('iTitre'), t, 2.1, 4.5, {dy: 0, s0: .86, dIn: .8});
+  reveal($('iSous'), t, 2.7, 4.5, {dy: 30});
+
+  tv(t);
+
+  stagger('#s2 .st', t, 5.3, 10.1, .18, {dx: 70, dy: 0, dIn: .8});
+  document.querySelector('#s2').style.top = '150px';
+  stagger('#s3 .st', t, 10.2, 15.9, .16, {dx: 70, dy: 0, dIn: .8});
+  document.querySelector('#s3').style.top = '170px';
+
+  stagger('#s4t .st', t, 16.3, 21.9, .15, {dy: 40});
+  stagger('#s4 .tuile', t, 16.7, 21.9, .13, {dy: 30, s0: .82, pop: true, dIn: .6});
+
+  document.querySelector('#s5').style.top = '130px';
+  stagger('#s5 .st', t, 22.4, 31, .2, {dx: 60, dy: 0, dIn: .8});
+  reveal($('prix'), t, 22.8, 31, {dy: 0, s0: .5, pop: true, dIn: .7});
+  reveal($('note'), t, 24, 31, {dy: 0});
+
+  reveal($('coin'), t, 5.8, 21.9, {dy: 0, s0: .6, pop: true, dIn: .6});
+  reveal($('marque'), t, 5, 31, {dy: 20});
+
+  // fondu au noir aux deux bouts : la vidéo boucle sans à-coup
+  $('noir').style.opacity = Math.max(1 - prog(t, 0, .35), prog(t, 29.3, 30));
+}
+window.frame = frame;
+window.DUREE = DUREE;
+
+// prévisualisation dans le navigateur (render.js passe ?rendu pour piloter lui-même)
+if (!location.search.includes('rendu')){
+  const t0 = performance.now();
+  const boucle = () => { frame((performance.now() - t0) / 1000); requestAnimationFrame(boucle); };
+  document.fonts.ready.then(boucle);
+} else frame(0);
+</script>
+</body>
+</html>
