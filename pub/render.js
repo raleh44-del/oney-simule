@@ -1,14 +1,15 @@
-// Rend la pub en MP4 1920x1080 (H.264 + piste son muette, lisible par les TV et
-// les lecteurs USB des magasins).
+// Rend la pub en MP4 1920x1080 (H.264 + AAC, lisible par les TV et les lecteurs
+// USB des magasins), avec la musique générée par musique.py.
 //
 //   NODE_PATH=$(npm root -g) node pub/render.js                 -> la vidéo
 //   NODE_PATH=$(npm root -g) node pub/render.js --images 3,7.5  -> des images fixes
 //
-// Prérequis : playwright (Chromium) et ffmpeg.
+// Prérequis : playwright (Chromium), ffmpeg, python3 avec numpy.
 const { chromium } = require('playwright');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { pathToFileURL } = require('url');
 
 const FPS = 30;
@@ -39,16 +40,19 @@ const SORTIE = path.join(__dirname, 'tv-edenwood-50-qled.mp4');
   }
 
   const duree = await page.evaluate(() => window.DUREE);
+  const musique = path.join(os.tmpdir(), 'pub-musique.wav');
+  const py = spawnSync('python3', [path.join(__dirname, 'musique.py'), musique], { stdio: 'inherit' });
+  if (py.status !== 0) throw new Error('musique.py a échoué');
   const ffmpeg = spawn('ffmpeg', [
     '-y', '-loglevel', 'error',
     '-f', 'image2pipe', '-c:v', 'png', '-framerate', String(FPS), '-i', '-',
-    '-f', 'lavfi', '-t', String(duree), '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000',
+    '-i', musique,
     '-map', '0:v', '-map', '1:a',
     '-vf', 'scale=out_color_matrix=bt709:out_range=tv,format=yuv420p',
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-profile:v', 'high', '-level:v', '4.1',
     '-g', String(FPS * 2),
     '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv',
-    '-c:a', 'aac', '-b:a', '96k',
+    '-c:a', 'aac', '-b:a', '192k', '-t', String(duree),
     '-movflags', '+faststart', SORTIE,
   ], { stdio: ['pipe', 'inherit', 'inherit'] });
 

@@ -101,9 +101,10 @@ body{font-family:'Inter',sans-serif;color:#fff;-webkit-font-smoothing:antialiase
 .etiq b{font-size:250px;font-weight:900;letter-spacing:-10px;line-height:1}
 .etiq i{font-style:normal;font-size:120px;font-weight:900;line-height:1;margin-top:30px;margin-left:8px}
 #prix{margin-top:30px;transform-origin:20% 50%}
-#ttc{font-size:26px;font-weight:700;color:var(--gris);margin-top:16px;letter-spacing:2px}
+#ttc{font-size:24px;font-weight:700;color:var(--gris);margin-top:16px;letter-spacing:1.5px}
 #info{display:flex;align-items:center;gap:34px;margin-top:34px}
-.dispo{display:inline-flex;align-items:center;gap:14px;margin-top:34px;padding:16px 30px;border-radius:40px;
+.pastilles{display:flex;gap:16px;margin-top:34px}
+.dispo{display:inline-flex;align-items:center;gap:14px;padding:16px 30px;border-radius:40px;
   background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18);font-size:34px;font-weight:800}
 .dispo i{width:18px;height:18px;border-radius:50%;background:#3ddc84;box-shadow:0 0 16px #3ddc84}
 #note{left:0;right:60px;bottom:40px;text-align:right;font-size:20px;color:#8c8c99}
@@ -123,10 +124,13 @@ body{font-family:'Inter',sans-serif;color:#fff;-webkit-font-smoothing:antialiase
   display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
 .dur .n b{font-family:'Inter',sans-serif;font-size:44px;font-weight:900;letter-spacing:0}
 .dur .n span{font-size:19px;font-weight:800;margin-top:2px}
-.dur > span{font-size:26px;font-weight:700;line-height:1.2;color:#e4e4ec}
+.dur > span{font-size:28px;font-weight:800;line-height:1.2;color:#e4e4ec}
+.dur > span small{display:block;font-size:22px;font-weight:600;color:var(--gris);margin-top:6px}
 
 /* rappel prix en coin et marque */
-#coin{right:56px;top:46px;display:flex;align-items:center;gap:16px;transform-origin:100% 0}
+#coin{right:56px;top:46px;display:flex;align-items:flex-start;gap:16px;transform-origin:100% 0}
+#coin .prixcoin{display:flex;flex-direction:column;align-items:flex-end}
+#coin small{font-family:'Inter',sans-serif;font-size:17px;font-weight:600;color:var(--gris);margin-top:8px}
 #coin .etiq{border-radius:14px;padding:2px 22px 6px 20px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 #coin .etiq b{font-size:84px;letter-spacing:-3px}
 #coin .etiq i{font-size:42px;margin-top:10px;margin-left:3px}
@@ -227,7 +231,7 @@ body{font-family:'Inter',sans-serif;color:#fff;-webkit-font-smoothing:antialiase
     <div class="tuile abs" style="--c:#ffb800;left:710px;top:390px"><b>HDR10</b><span>Plage dynamique étendue</span></div>
     <div class="tuile abs" style="--c:#00c2ff;left:1240px;top:390px"><b>Dolby Audio</b><span>Technologie son</span></div>
     <div class="tuile abs" style="--c:#8b5cff;left:180px;top:650px"><b>60 Hz</b><span>Fréquence d'affichage</span></div>
-    <div class="tuile abs" style="--c:#00e0a4;left:710px;top:650px"><b>3 HDMI</b><span>+ USB multimédia et optique</span></div>
+    <div class="tuile abs" style="--c:#00e0a4;left:710px;top:650px"><b>3 HDMI</b><span>HDMI 2.1 · USB · sortie optique</span></div>
     <div class="tuile abs" style="--c:#ffc20e;left:1240px;top:650px"><b>Wi-Fi</b><span>Smart TV connectée</span></div>
   </div>
 
@@ -236,15 +240,15 @@ body{font-family:'Inter',sans-serif;color:#fff;-webkit-font-smoothing:antialiase
     <div class="kick st" style="letter-spacing:4px">TV QLED 50" · 127 cm</div>
     <div class="m st">EDENWOOD<br>ED50QT01FHD-RE</div>
     <div id="prix" class="st"><div class="etiq"><b>229</b><i>€</i></div></div>
-    <div id="ttc" class="st">PRIX TTC</div>
+    <div id="ttc" class="st">PRIX TTC, DONT 11,11 € D'ÉCO-PARTICIPATION</div>
     <div id="info" class="st">
       <div class="nrj" style="--h:118px;--c:#fdb913">
         <div class="ech"><span>A</span><svg viewBox="0 0 16 30"><path d="M8 1v28M2 7l6-6 6 6M2 23l6 6 6-6" fill="none" stroke="#000" stroke-width="2.4"/></svg><span>G</span></div>
         <div class="fl"><b>E</b></div>
       </div>
-      <div class="dur"><div class="n"><b>7,1</b><span>/10</span></div><span>Indice de<br>durabilité</span></div>
+      <div class="dur"><div class="n"><b>7,1</b><span>/10</span></div><span>Indice de durabilité<small>Pièces détachées 11 ans</small></span></div>
     </div>
-    <div class="dispo st"><i></i>Disponible en magasin</div>
+    <div class="pastilles st"><div class="dispo">Garantie 2 ans</div><div class="dispo"><i></i>Disponible en magasin</div></div>
   </div>
   <div id="note" class="abs">Réf. 10017726 · Offre valable dans la limite des stocks disponibles.</div>
 
@@ -254,7 +258,7 @@ body{font-family:'Inter',sans-serif;color:#fff;-webkit-font-smoothing:antialiase
       <div class="ech"><span>A</span><svg viewBox="0 0 16 30"><path d="M8 1v28M2 7l6-6 6 6M2 23l6 6 6-6" fill="none" stroke="#000" stroke-width="2.4"/></svg><span>G</span></div>
       <div class="fl"><b>E</b></div>
     </div>
-    <div class="etiq"><b>229</b><i>€</i></div>
+    <div class="prixcoin"><div class="etiq"><b>229</b><i>€</i></div><small>dont 11,11 € d'éco-part.</small></div>
   </div>
   <div id="marque" class="abs g d"><b>edenwood</b><span>BY ELECTRO DEPOT</span></div>
 
@@ -390,7 +394,7 @@ function frame(t){
   stagger('#s4t .st', t, 16.3, 21.9, .15, {dy: 40});
   stagger('#s4 .tuile', t, 16.7, 21.9, .13, {dy: 30, s0: .82, pop: true, dIn: .6});
 
-  document.querySelector('#s5').style.top = '130px';
+  document.querySelector('#s5').style.top = '110px';
   stagger('#s5 .st', t, 22.4, 31, .2, {dx: 60, dy: 0, dIn: .8});
   reveal($('prix'), t, 22.8, 31, {dy: 0, s0: .5, pop: true, dIn: .7});
   reveal($('note'), t, 24, 31, {dy: 0});
